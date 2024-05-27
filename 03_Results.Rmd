@@ -1,0 +1,2390 @@
+---
+title: "03 Presentation"
+author: "Et al"
+date: "11-20-2023"
+output:
+  rmdformats::robobook:
+    code_folding: hide
+    toc_depth: 2
+  html_document:
+    toc_depth: '2'
+    df_print: paged
+  pdf_document:
+    toc_depth: '2'
+---
+
+
+
+
+# Load
+
+## PAMAFRO
+
+### Vivax
+
+```{r,message=F,warning=F}
+
+library(tidyverse)
+library(geofacet)
+library(sf)
+
+
+
+
+Peru           <- readRDS("peru.rds")
+peru_prov_shp  <- Peru %>% 
+                  filter(dep=="LORETO") %>% 
+                  group_by(prov) %>% 
+                  summarise()
+
+
+db_vx_pfro                <-  readRDS("forecast_intervention/db_frcst_bestmodels_vx_pfro.rds")
+db.error_vx_pfro          <-  db_vx_pfro                                            %>% 
+                              group_by(.index,.model_desc)                          %>% 
+                              summarise(valor=sum(.value))    
+
+db.error.tbl_vx_pfro   <- db.error_vx_pfro                                                  %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2006-01-01"))   
+
+##2
+db.prov.error_vx_pfro <- db_vx_pfro                          %>% 
+                         group_by(.index,id,.model_desc)        %>% 
+                         summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_vx_pfro <- db.prov.error_vx_pfro                             %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2006-01-01"))    %>% 
+                  mutate(dif_pht  = ACTUAL - PROPHET ,
+                         dif_ar   = ACTUAL - ARIMA ,
+                         dif_nnar = ACTUAL - NNAR,
+                         dif_arxg = ACTUAL - ARIMAXG
+                         )
+
+db.full.prov.error.tbl_vx_pfro <- db.prov.error.tbl_vx_pfro %>%
+                              group_by(id) %>% 
+                              summarise(dif_ar  = sum(dif_ar),
+                                        dif_arxg  = sum(dif_arxg),
+                                        dif_pht = sum(dif_pht),
+                                        dif_nnar = sum(dif_nnar)
+                                        )
+
+
+
+#3)
+
+  fitted_vx_pfro<-readRDS("fit_preintervention/fitted_values_vx_pfro.rds")    %>% 
+                  select(.model_desc,date,.prediction,id) %>% 
+                  rename(.value = .prediction,
+                         .index =  date) %>% 
+                  mutate(.key   = "fitted")
+
+
+  
+  # 4 ) trains
+  
+ db_vx_pfro.train<-  db_vx_pfro                                                               %>% # prediccion + actual
+                     rbind(fitted_vx_pfro)                                                    %>% # fitted values
+                     mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                            .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                            .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"),
+                            .model_desc = str_replace(.model_desc, "ARIMA.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "REGRESSION.*", "ARIMA")
+                            )
+ 
+ 
+db.error_vx_pfro.train       <-     db_vx_pfro.train                                       %>% 
+                                    group_by(.index,.model_desc)                           %>% 
+                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+
+
+db.error.tbl_vx_pfro.train   <- db.error_vx_pfro.train                                      %>% 
+                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                                filter(.index<as.Date("2006-01-01"))   
+
+
+
+### 5 
+
+db.prov.error_vx_pfro.train <- db_vx_pfro.train                          %>% 
+                               group_by(.index,id,.model_desc)           %>% 
+                               summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_vx_pfro.train <- db.prov.error_vx_pfro.train                             %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index<as.Date("2006-01-01"))    %>% 
+                  mutate(dif_pht  = ACTUAL - PROPHET ,
+                         dif_ar   = ACTUAL - ARIMA ,
+                         dif_nnar = ACTUAL - NNAR,
+                         dif_arxg = ACTUAL - ARIMAXG
+                         )
+
+db.full.prov.error.tbl_vx_pfro.train <- db.prov.error.tbl_vx_pfro.train %>%
+                              ungroup() %>% 
+                              group_by(id) %>% 
+                              summarise(dif_ar  = sum(dif_ar),
+                                        dif_arxg  = sum(dif_arxg),
+                                        dif_pht = sum(dif_pht),
+                                        dif_nnar = sum(dif_nnar,na.rm = TRUE)
+                                        )
+
+
+```
+
+### Falciparum
+
+```{r,message=F,warning=F}
+
+
+
+library(tidyverse)
+
+load("Peru.rda")
+peru_prov_shp  <- Peru %>% 
+                  filter(dep=="LORETO") %>% 
+                  group_by(prov) %>% 
+                  summarise()
+
+
+db_flpm_pfro             <-  readRDS("forecast_intervention/db_frcst_bestmodels_flcpm_pfro.rds")
+db.error_flpm_pfro       <-   db_flpm_pfro                                              %>% 
+                              group_by(.index,.model_desc)                         %>% 
+                              summarise(valor=sum(.value))    
+
+db.error.tbl_flpm_pfro   <-  db.error_flpm_pfro                                       %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         ) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2006-01-01"))   
+
+##2
+db.prov.error_flpm_pfro <-  db_flpm_pfro                              %>% 
+                           group_by(.index,id,.model_desc)      %>% 
+                           summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_flpm_pfro <- db.prov.error_flpm_pfro                                   %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         
+                         ) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2006-01-01"))    %>% 
+                          mutate(dif_pht  = ACTUAL - PROPHET ,
+                                 dif_ar   = ACTUAL - ARIMA ,
+                                 dif_arxg   = ACTUAL - ARIMAXG ,
+                                 dif_nnar = ACTUAL - NNAR
+                                 )
+
+db.full.prov.error.tbl_flpm_pfro <-  db.prov.error.tbl_flpm_pfro %>%
+                                group_by(id) %>% 
+                                summarise(dif_ar  = sum(dif_ar),
+                                          dif_arxg  = sum(dif_arxg),
+                                          dif_pht = sum(dif_pht),
+                                          dif_nnar = sum(dif_nnar)
+                                          )
+
+
+#3)
+
+  fitted_flpm_pfro<-readRDS("fit_preintervention/fitted_values_flpm_pfro2024v11_3.rds")    %>% 
+                  select(.model_desc,date,.prediction,id) %>% 
+                  rename(.value = .prediction,
+                         .index =  date) %>% 
+                  mutate(.key   = "fitted")
+
+  
+  
+###############  
+# 4
+ db_flpm_pfro.train<-  db_flpm_pfro                                                               %>% # prediccion + actual
+                     rbind(fitted_flpm_pfro)                                                    %>% # fitted values
+                     mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                            .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                            .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"),
+                            .model_desc = str_replace(.model_desc, "ARIMA.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "REGRESSION.*", "ARIMA")
+                            )
+ 
+ 
+db.error_flpm_pfro.train       <-     db_flpm_pfro.train                                       %>% 
+                                    group_by(.index,.model_desc)                           %>% 
+                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+
+
+db.error.tbl_flpm_pfro.train   <- db.error_flpm_pfro.train                                      %>% 
+                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                                filter(.index<as.Date("2006-01-01"))  
+
+
+
+
+### 5 
+
+db.prov.error_flpm_pfro.train <- db_flpm_pfro.train                          %>% 
+                               group_by(.index,id,.model_desc)             %>% 
+                               summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_flpm_pfro.train <- db.prov.error_flpm_pfro.train                             %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index<as.Date("2006-01-01"))    %>% 
+                  mutate(dif_pht  = ACTUAL - PROPHET ,
+                         dif_ar   = ACTUAL - ARIMA ,
+                         dif_nnar = ACTUAL - NNAR,
+                         dif_arxg = ACTUAL - ARIMAXG
+                         )
+
+db.full.prov.error.tbl_flpm_pfro.train <- db.prov.error.tbl_flpm_pfro.train %>%
+                              ungroup() %>% 
+                              group_by(id) %>% 
+                              summarise(dif_ar  = sum(dif_ar),
+                                        dif_arxg  = sum(dif_arxg),
+                                        dif_pht = sum(dif_pht),
+                                        dif_nnar = sum(dif_nnar,na.rm = TRUE)
+                                        )
+
+
+
+
+```
+
+
+## MALARIA CERO
+
+### Vivax
+
+```{r,message=F,warning=F}
+
+library(tidyverse)
+library(geofacet)
+library(sf)
+
+
+# shapefile de una provincia
+Peru           <- readRDS("peru.rds")
+peru_prov_shp  <- Peru %>% 
+                  filter(dep=="LORETO") %>% 
+                  group_by(prov) %>% 
+                  summarise()
+
+
+db_vx_mcero             <-  readRDS("forecast_intervention/db_frcst_bestmodels_vx_mcero.rds")
+db.error_vx_mcero          <- db_vx_mcero                                               %>% 
+                      group_by(.index,.model_desc)                          %>% 
+                      summarise(valor=sum(.value))    
+
+db.error.tbl_vx_mcero   <- db.error_vx_mcero                                 %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         ) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2017-01-01"))   
+##2
+db.prov.error_vx_mcero <- db_vx_mcero                              %>% 
+                         group_by(.index,id,.model_desc) %>% 
+                         summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_vx_mcero <- db.prov.error_vx_mcero                            %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         ) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2017-01-01")) %>% 
+                  mutate(dif_pht  = ACTUAL - PROPHET ,
+                         dif_ar   = ACTUAL - ARIMA ,
+                         dif_arxg   = ACTUAL - ARIMAXG ,
+                         dif_nnar = ACTUAL - NNAR
+                         )
+
+db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero %>%
+                              group_by(id) %>% 
+                              summarise(dif_ar  = sum(dif_ar),
+                                        dif_arxg  = sum(dif_arxg),
+                                        dif_pht = sum(dif_pht),
+                                        dif_nnar = sum(dif_nnar)
+                                        )
+
+
+
+
+
+#3)
+
+  fitted_vx_mcero<-readRDS("fit_preintervention/fitted_values_vx_mcero2024v11_3.rds")    %>% 
+                  select(.model_desc,date,.prediction,id) %>% 
+                  rename(.value = .prediction,
+                         .index =  date) %>% 
+                  mutate(.key   = "fitted")
+  
+  
+############  
+# 4
+ db_vx_mcero.train<-  db_vx_mcero                                                               %>% # prediccion + actual
+                     rbind(fitted_vx_mcero)                                                    %>% # fitted values
+                     mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                            .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                            .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"),
+                            .model_desc = str_replace(.model_desc, "ARIMA.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "REGRESSION.*", "ARIMA")
+                            )
+ 
+ 
+db.error_vx_mcero.train       <-     db_vx_mcero.train                                       %>% 
+                                    group_by(.index,.model_desc)                           %>% 
+                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+
+
+db.error.tbl_vx_mcero.train   <- db.error_vx_mcero.train                                      %>% 
+                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                                filter(.index<as.Date("2017-01-01"))  
+
+
+
+
+### 5 
+
+db.prov.error_vx_mcero.train <- db_vx_mcero.train                          %>% 
+                               group_by(.index,id,.model_desc)             %>% 
+                               summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_vx_mcero.train <- db.prov.error_vx_mcero.train                             %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index<as.Date("2017-01-01"))    %>% 
+                  mutate(dif_pht  = ACTUAL - PROPHET ,
+                         dif_ar   = ACTUAL - ARIMA ,
+                         dif_nnar = ACTUAL - NNAR,
+                         dif_arxg = ACTUAL - ARIMAXG
+                         )
+
+db.full.prov.error.tbl_vx_mcero.train <- db.prov.error.tbl_vx_mcero.train %>%
+                              ungroup() %>% 
+                              group_by(id) %>% 
+                              summarise(dif_ar  = sum(dif_ar),
+                                        dif_arxg  = sum(dif_arxg),
+                                        dif_pht = sum(dif_pht),
+                                        dif_nnar = sum(dif_nnar,na.rm = TRUE)
+                                        )
+
+
+
+
+
+```
+
+### Falciparum
+
+```{r,message=F,warning=F}
+
+
+
+library(tidyverse)
+
+load("Peru.rda")
+peru_prov_shp  <- Peru %>% 
+                  filter(dep=="LORETO") %>% 
+                  group_by(prov) %>% 
+                  summarise()
+
+
+db_flpm_mcero             <-  readRDS("forecast_intervention/db_frcst_bestmodels_flcpm_mcero.rds")
+db.error_flpm_mcero       <-  db_flpm_mcero                                              %>% 
+                              group_by(.index,.model_desc)                         %>% 
+                              summarise(valor=sum(.value))    
+
+db.error.tbl_flpm_mcero   <-  db.error_flpm_mcero                                            %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         ) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2017-01-01"))
+
+##2
+db.prov.error_flpm_mcero <-  db_flpm_mcero                              %>% 
+                             group_by(.index,id,.model_desc)      %>% 
+                             summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_flpm_mcero <- db.prov.error_flpm_mcero                                      %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         ) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index>=as.Date("2017-01-01")) %>% 
+                          mutate(dif_pht  = ACTUAL - PROPHET ,
+                                 dif_ar   = ACTUAL - ARIMA ,
+                                 dif_arxg   = ACTUAL - ARIMAXG ,
+                                 dif_nnar = ACTUAL - NNAR
+                                 )
+
+db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero %>%
+                                        group_by(id) %>% 
+                                        summarise(dif_ar  = sum(dif_ar),
+                                                  dif_arxg  = sum(dif_arxg),
+                                                  dif_pht = sum(dif_pht),
+                                                  dif_nnar = sum(dif_nnar)
+                                                  )
+
+
+
+#3)
+
+  fitted_flpm_mcero<-readRDS("fit_preintervention/fitted_values_flpm_mcero2024v11_3.rds")    %>% 
+                  select(.model_desc,date,.prediction,id) %>% 
+                  rename(.value = .prediction,
+                         .index =  date) %>% 
+                  mutate(.key   = "fitted")
+  
+  
+################  
+# 4
+ db_flpm_mcero.train<-db_flpm_mcero                                                               %>% # prediccion + actual
+                     rbind(fitted_flpm_mcero)                                                    %>% # fitted values
+                     mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                            .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                            .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"),
+                            .model_desc = str_replace(.model_desc, "ARIMA.*", "ARIMAXG"),
+                            .model_desc = str_replace(.model_desc, "REGRESSION.*", "ARIMA")
+                            )
+ 
+ 
+db.error_flpm_mcero.train       <-     db_flpm_mcero.train                                       %>% 
+                                    group_by(.index,.model_desc)                           %>% 
+                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+
+
+db.error.tbl_flpm_mcero.train   <- db.error_flpm_mcero.train                                      %>% 
+                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                                filter(.index<as.Date("2017-01-01"))
+        
+
+
+
+
+
+
+### 5 
+
+db.prov.error_flpm_mcero.train <- db_flpm_mcero.train                          %>% 
+                               group_by(.index,id,.model_desc)             %>% 
+                               summarise(valor=sum(.value))
+
+
+db.prov.error.tbl_flpm_mcero.train <- db.prov.error_flpm_mcero.train                             %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                  filter(.index<as.Date("2017-01-01"))    %>% 
+                  mutate(dif_pht  = ACTUAL - PROPHET ,
+                         dif_ar   = ACTUAL - ARIMA ,
+                         dif_nnar = ACTUAL - NNAR,
+                         dif_arxg = ACTUAL - ARIMAXG
+                         )
+
+db.full.prov.error.tbl_flpm_mcero.train <- db.prov.error.tbl_flpm_mcero.train %>%
+                              ungroup() %>% 
+                              group_by(id) %>% 
+                              summarise(dif_ar  = sum(dif_ar),
+                                        dif_arxg  = sum(dif_arxg),
+                                        dif_pht = sum(dif_pht),
+                                        dif_nnar = sum(dif_nnar,na.rm = TRUE)
+                                        )
+
+
+        
+
+```
+
+
+
+
+# Results
+
+
+
+
+## Metrics Table{.tabset}
+
+```{r,message=F,warning=F}
+
+library(purrr)
+library(yardstick)
+
+
+
+
+
+data.error.falciparum.pfro <-data.frame(Especie         =c("Falciparum"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
+                       Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                       Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                       
+     
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
+                        Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                       Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                       Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                      ),
+
+MASE                = c( Metrics::mase(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
+                         Metrics::mase(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                         Metrics::mase(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                         Metrics::mase(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                      ),
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
+                        Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                       Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                       Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                      ),
+
+SMAPE                = c( Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
+                        Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                       Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                       Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
+                         Metrics::rmse(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                         Metrics::rmse(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                         Metrics::rmse(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                       
+                       )
+
+                       )
+
+
+
+
+data.error.vivax.pfro <-data.frame(Especie         =c("Vivax"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
+                       Metrics::mdae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                       Metrics::mdae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+          
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
+                        Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                       Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                       Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                      ),
+
+
+
+MASE                = c( Metrics::mase(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
+                         Metrics::mase(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                         Metrics::mase(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                         Metrics::mase(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                      ),
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
+                        Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                       Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                       Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                      ),
+
+
+SMAPE                = c( Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
+                        Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                       Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                       Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
+                         Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                       Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                       Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                       )
+
+                       )
+
+###################################################################################################
+
+
+
+data.error.falciparum.mcero <-data.frame(Especie         =c("Falciparum"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
+                       Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                       Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+           
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
+                        Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                       Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                       Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                      ),
+
+MASE                = c( Metrics::mase(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
+                         Metrics::mase(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                         Metrics::mase(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                         Metrics::mase(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                      ),
+
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
+                        Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                       Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                       Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                      ),
+
+
+SMAPE                = c( Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
+                        Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                       Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                       Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
+                         Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                       Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                       Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                       )
+
+                       )
+
+
+
+data.error.vivax.mcero <-data.frame(Especie         =c("Vivax"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
+                       Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                       Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+         
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
+                        Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                       Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                       Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                      ),
+
+MASE                = c( Metrics::mase(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
+                         Metrics::mase(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                         Metrics::mase(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                         Metrics::mase(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                      ),
+
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
+                        Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                       Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                       Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                      ),
+
+SMAPE                = c( Metrics::smape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
+                          Metrics::smape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                          Metrics::smape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                          Metrics::smape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
+                         Metrics::rmse(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                         Metrics::rmse(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                         Metrics::rmse(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                       )
+
+                       )
+
+
+
+
+```
+
+### PAMAFRO{.tabset}
+
+#### Vivax{.tabset}
+
+##### Table
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+
+ 
+ data.error.vivax.pfro                 %>%
+          select(-Especie)           %>% 
+          gt::gt()                   %>%
+          tab_spanner(
+            label = "Vivax",
+            columns = c(2,3,4)
+          )
+
+  
+
+
+
+```
+
+##### Plot
+
+```{r,message=F,warning=F}
+coord_radar <- function (theta = "x", start = 0, direction = 1) 
+
+
+ {
+        theta <- match.arg(theta, c("x", "y"))
+        r <- if (theta == "x") 
+            "y"
+        else "x"
+        ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+            direction = sign(direction),
+            is_linear = function(coord) TRUE)
+    }
+
+
+tbl.vx.pfro.long <-  data.error.vivax.pfro                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)# %>% 
+                       #mutate(value=value/sum(value))
+
+
+     
+      tbl.vx.pfro.long %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+      
+```
+
+
+
+#### Falciparum{.tabset}
+
+##### Table
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+ 
+  data.error.falciparum.pfro                 %>%
+  select(-Especie)           %>% 
+  gt::gt()                   %>%
+  tab_spanner(
+    label = "Falciparum",
+    columns = c(2,3,4)
+  )
+
+```
+
+##### Plot
+
+```{r,message=F,warning=F}
+
+tbl.flpm.pfro.long <-  data.error.falciparum.pfro                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)# 
+
+     
+      tbl.flpm.pfro.long %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+
+```
+
+
+
+
+
+
+
+
+### MALARIA CERO{.tabset}
+
+
+#### Vivax{.tabset}
+
+##### Table
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+ 
+  data.error.vivax.mcero                 %>%
+  select(-Especie)           %>% 
+  gt::gt()                   %>%
+  tab_spanner(
+    label = "Vivax",
+    columns = c(2,3,4)
+  )
+
+```
+
+
+##### Plot
+
+```{r,message=F,warning=F}
+
+tbl.vx.mcero.long <-  data.error.vivax.mcero                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)# 
+
+     
+      tbl.vx.mcero.long %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+
+```
+
+
+
+#### Falciparum{.tabset}
+
+##### Table
+
+
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+ 
+  data.error.falciparum.mcero                 %>%
+  select(-Especie)           %>% 
+  gt::gt()                   %>%
+  tab_spanner(
+    label = "Falciparum",
+    columns = c(2,3,4)
+  )
+
+```
+
+
+##### Plot
+
+```{r,message=F,warning=F}
+
+tbl.flpm.mcero.long <-  data.error.falciparum.mcero                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)#
+
+     
+      tbl.flpm.mcero.long %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+
+```
+
+
+
+
+
+
+
+
+## incidence prevented POST
+
+### PAMAFRO
+
+#### vivax
+```{r}
+
+
+
+pfro.db.vx <- db.prov.error.tbl_vx_pfro      %>%
+              ungroup()                         %>%  
+              group_by(id)                      %>% 
+              summarise(sum_pht  = sum(dif_pht),
+                        mean_pht = mean(dif_pht),
+                        sd_pht   = sd(dif_pht)
+                        )
+
+print(pfro.db.vx)
+
+print(sum(pfro.db.vx$sum_pht))
+
+```
+
+#### falciparum
+
+```{r}
+        
+pfro.db.flpm <- db.prov.error.tbl_flpm_pfro      %>%
+                ungroup()                         %>%  
+                group_by(id)                      %>% 
+                summarise(sum_pht  = sum(dif_pht),
+                          mean_pht = mean(dif_pht),
+                          sd_pht   = sd(dif_pht)
+                          
+                          )
+
+
+
+print(pfro.db.flpm)
+
+print(sum(pfro.db.flpm$sum_pht))
+
+
+```
+
+
+
+### MCERO
+
+#### vivax
+
+```{r,message=F,warning=F}
+
+mcero.db.vx  <- db.prov.error.tbl_vx_mcero      %>%
+                ungroup()                         %>%  
+                group_by(id)                      %>% 
+                summarise(sum_pht = sum(dif_pht),
+                          mean_pht = mean(dif_pht),
+                          sd_pht = sd(dif_pht)
+                          
+                          
+                          )
+
+print(mcero.db.vx)
+
+print(sum(mcero.db.vx$sum_pht))
+                
+
+```
+
+
+#### falciparum
+```{r}
+
+
+mcero.db.flpm  <- db.prov.error.tbl_flpm_mcero      %>%
+                ungroup()                         %>%  
+                group_by(id)                      %>% 
+                summarise(sum_pht = sum(dif_pht),
+                          mean_pht = mean(dif_pht),
+                          sd_pht = sd(dif_pht)
+                          
+                          )
+
+
+print(mcero.db.flpm)
+print(sum(mcero.db.flpm$sum_pht))
+             
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Metrics table train
+
+
+```{r}
+
+
+#######################################################################################################################
+#######################################################################################################################
+# errores training 
+
+
+
+
+data.error.falciparum.pfro.train <-data.frame(Especie         =c("Falciparum"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMA),
+                       Metrics::mdae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$PROPHET),
+                       Metrics::mdae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$NNAR)
+         
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMA),
+                        Metrics::mae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMAXG),
+                        Metrics::mae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$PROPHET),
+                        Metrics::mae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$NNAR)
+                      ),
+
+MASE                = c( Metrics::mase(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMA),
+                         Metrics::mase(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMAXG),
+                         Metrics::mase(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$PROPHET),
+                         Metrics::mase(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$NNAR)
+                      ),
+
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMA),
+                        Metrics::mape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMAXG),
+                       Metrics::mape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$PROPHET),
+                       Metrics::mape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$NNAR)
+                      ),
+
+SMAPE                = c( Metrics::smape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMA),
+                        Metrics::smape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMAXG),
+                       Metrics::smape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$PROPHET),
+                       Metrics::smape(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMA),
+                         Metrics::mae(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$ARIMAXG),
+                       Metrics::rmse(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$PROPHET),
+                       Metrics::rmse(db.error.tbl_flpm_pfro.train$ACTUAL,db.error.tbl_flpm_pfro.train$NNAR)
+                       
+                       )
+
+                       )
+
+
+
+data.error.vivax.pfro.train <-data.frame(Especie         =c("Vivax"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMA),
+                       Metrics::mae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$PROPHET),
+                       Metrics::mdae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$NNAR)
+          
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMA),
+                        Metrics::mae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMAXG),
+                       Metrics::mae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$PROPHET),
+                       Metrics::mae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$NNAR)
+                      ),
+
+
+MASE                = c( Metrics::mase(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMA),
+                         Metrics::mase(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMAXG),
+                         Metrics::mase(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$PROPHET),
+                         Metrics::mase(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$NNAR)
+                      ),
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMA),
+                        Metrics::mape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMAXG),
+                       Metrics::mape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$PROPHET),
+                       Metrics::mape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$NNAR)
+                      ),
+
+
+SMAPE                = c( Metrics::smape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMA),
+                        Metrics::smape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMAXG),
+                       Metrics::smape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$PROPHET),
+                       Metrics::smape(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMA),
+                         Metrics::mae(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$ARIMAXG),
+                         Metrics::rmse(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$PROPHET),
+                         Metrics::rmse(db.error.tbl_vx_pfro.train$ACTUAL,db.error.tbl_vx_pfro.train$NNAR)
+                       )
+
+                       )
+
+##################################################################################################
+
+
+
+
+data.error.falciparum.mcero.train <-data.frame(Especie         =c("Falciparum"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMA),
+                       Metrics::mdae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$PROPHET),
+                       Metrics::mdae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$NNAR)
+                
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMA),
+                        Metrics::mae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMAXG),
+                        Metrics::mae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$PROPHET),
+                        Metrics::mae(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$NNAR)
+                      ),
+
+MASE                = c( Metrics::mase(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMA),
+                         Metrics::mase(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMAXG),
+                         Metrics::mase(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$PROPHET),
+                         Metrics::mase(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$NNAR)
+                      ),
+
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMA),
+                         Metrics::mape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMAXG),
+                         Metrics::mape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$PROPHET),
+                         Metrics::mape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$NNAR)
+                      ),
+
+
+SMAPE                = c( Metrics::smape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMA),
+                          Metrics::smape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMAXG),
+                          Metrics::smape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$PROPHET),
+                          Metrics::smape(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMA),
+                         Metrics::rmse(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$ARIMAXG),
+                         Metrics::rmse(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$PROPHET),
+                         Metrics::rmse(db.error.tbl_flpm_mcero.train$ACTUAL,db.error.tbl_flpm_mcero.train$NNAR)
+                       )
+
+                       )
+
+
+
+data.error.vivax.mcero.train <-data.frame(Especie         =c("Vivax"),
+                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+MDAE                =c(Metrics::mdae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMA),
+                       Metrics::mdae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMAXG),
+                       Metrics::mdae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$PROPHET),
+                       Metrics::mdae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$NNAR)
+               
+                      ),
+
+MAE                = c( Metrics::mae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMA),
+                        Metrics::mae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMAXG),
+                        Metrics::mae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$PROPHET),
+                        Metrics::mae(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$NNAR)
+                      ),
+
+
+MASE                = c( Metrics::mase(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMA),
+                        Metrics::mase(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMAXG),
+                        Metrics::mase(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$PROPHET),
+                        Metrics::mase(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$NNAR)
+                      ),
+
+
+
+
+
+
+MAPE                = c( Metrics::mape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMA),
+                         Metrics::mape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMAXG),
+                         Metrics::mape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$PROPHET),
+                         Metrics::mape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$NNAR)
+                      ),
+
+SMAPE                = c( Metrics::smape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMA),
+                          Metrics::smape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMAXG),
+                          Metrics::smape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$PROPHET),
+                          Metrics::smape(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$NNAR)
+                      ),
+
+RMSE                = c( Metrics::rmse(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMA),
+                         Metrics::rmse(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$ARIMAXG),
+                         Metrics::rmse(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$PROPHET),
+                         Metrics::rmse(db.error.tbl_vx_mcero.train$ACTUAL,db.error.tbl_vx_mcero.train$NNAR)
+                       )
+
+                       )
+
+
+
+```
+
+
+### PAMAFRO{.tabset}
+
+#### Vivax{.tabset}
+
+##### Table
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+
+ 
+ data.error.vivax.pfro.train                 %>%
+          select(-Especie)           %>% 
+          gt::gt()                   %>%
+          tab_spanner(
+            label = "Vivax",
+            columns = c(2,3,4)
+          )
+
+  
+
+
+
+```
+
+##### Plot
+
+```{r,message=F,warning=F}
+coord_radar <- function (theta = "x", start = 0, direction = 1) 
+
+
+ {
+        theta <- match.arg(theta, c("x", "y"))
+        r <- if (theta == "x") 
+            "y"
+        else "x"
+        ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+            direction = sign(direction),
+            is_linear = function(coord) TRUE)
+    }
+
+
+tbl.vx.pfro.long.train <-  data.error.vivax.pfro.train                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)#
+
+     
+      tbl.vx.pfro.long.train %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+      
+```
+
+
+
+#### Falciparum{.tabset}
+
+##### Table
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+ 
+  data.error.falciparum.pfro.train                 %>%
+  select(-Especie)           %>% 
+  gt::gt()                   %>%
+  tab_spanner(
+    label = "Falciparum",
+    columns = c(2,3,4)
+  )
+
+```
+
+##### Plot
+
+```{r,message=F,warning=F}
+
+tbl.flpm.pfro.long.train <-  data.error.falciparum.pfro.train                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)#
+
+     
+      tbl.flpm.pfro.long.train %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+
+```
+
+
+
+
+### MALARIA CERO{.tabset}
+
+
+
+#### Vivax{.tabset}
+
+##### Table
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+ 
+  data.error.vivax.mcero.train                 %>%
+  select(-Especie)           %>% 
+  gt::gt()                   %>%
+  tab_spanner(
+    label = "Vivax",
+    columns = c(2,3,4)
+  )
+
+```
+
+
+##### Plot
+
+```{r,message=F,warning=F}
+
+tbl.vx.mcero.long.train <-  data.error.vivax.mcero.train                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)# 
+
+     
+      tbl.vx.mcero.long.train %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+
+```
+
+
+
+#### Falciparum{.tabset}
+
+##### Table
+
+
+
+```{r,message=F,warning=F}
+
+
+library(gt)
+ 
+  data.error.falciparum.mcero.train                 %>%
+  select(-Especie)           %>% 
+  gt::gt()                   %>%
+  tab_spanner(
+    label = "Falciparum",
+    columns = c(2,3,4)
+  )
+
+```
+
+
+##### Plot
+
+```{r,message=F,warning=F}
+
+tbl.flpm.mcero.long.train <-  data.error.falciparum.mcero.train                 %>%
+                     select(-Especie)  %>% 
+                     pivot_longer(-Model)# 
+     
+      tbl.flpm.mcero.long.train %>% 
+      ggplot( aes(x = name, y = value)) +
+      geom_polygon(aes(group = Model, color = Model,fill = Model),
+                   alpha=0.2, size = 0.5, show.legend = TRUE) +
+      coord_radar() +
+     # RadarTheme+
+      theme(panel.background=element_blank(),
+             panel.grid.major=element_line(size=0.3,linetype = 2,colour="grey"))+
+      xlab(" ")+
+      ylab(" ")
+      
+
+```
+
+
+
+
+
+## incidence prevented PRE
+
+### PAMAFRO
+
+#### vivax
+
+```{r}
+
+
+
+db.prov.error.tbl_vx_pfro.train      %>%
+ungroup()                         %>%  
+group_by(id)                      %>% 
+summarise(sum_pht = sum(dif_pht),
+          mean_pht = mean(dif_pht),
+          sd_pht = sd(dif_pht)
+          
+          )
+
+
+
+```
+
+
+#### falciparum
+
+```{r}
+
+
+
+db.prov.error.tbl_flpm_pfro.train      %>%
+ungroup()                         %>%  
+group_by(id)                      %>% 
+summarise(sum_pht = sum(dif_pht),
+          mean_pht = mean(dif_pht),
+          sd_pht = sd(dif_pht)
+          
+          )
+
+
+
+```
+
+
+
+
+### MCERO
+
+#### vivax
+
+```{r,message=F,warning=F}
+
+db.prov.error.tbl_vx_mcero.train      %>%
+ungroup()                         %>%  
+group_by(id)                      %>% 
+summarise(sum_pht = sum(dif_pht),
+          mean_pht = mean(dif_pht),
+          sd_pht = sd(dif_pht)
+          
+          )
+
+
+```
+
+#### falciparum
+
+```{r}
+
+db.prov.error.tbl_flpm_mcero.train      %>%
+ungroup()                         %>%  
+group_by(id)                      %>% 
+summarise(sum_pht = sum(dif_pht),
+          mean_pht = mean(dif_pht),
+          sd_pht = sd(dif_pht)
+          
+          
+          )
+
+
+```
+
+
+
+
+
+
+#  model
+
+$$
+y_{t} =\sum_{i=1}^{p} \alpha_{i} y_{t-i}  +\sum_{j=1}^{q}\beta_{j} e_{t-j} +e_{t} 
+$$
+
+# PROPHET MODEL
+
+
+$$
+y(t) = g(t) + s(t) + h(t) + e(t)
+$$
+
+
+$$
+ g(t)=\frac{C}{1+exp(-k(t-m))} 
+$$
+
+$$
+  S(t) = \sum_{n=1}^{N}((a_{n})cos(\frac{2\pi nt}{P})+((b_{n})sin(\frac{2\pi nt}{P})
+$$
+
+
+
+## Time series plot by prov {.tabset}
+
+### PAMAFRO{.tabset}
+
+#### Vivax
+
+```{r,message=F,warning=F,fig.width=10,fig.height=7}
+
+model.selected <-"PROPHET"
+
+library(geofacet)
+library(tidyverse)
+
+
+loreto_grid <- data.frame(
+  row  = c(2, 3, 3, 3, 4, 4, 5) - 1,
+  col  = c(2, 2, 1, 3, 1, 2, 2),
+  code = c("MA", "LO", "DM", "RC", "AA", "RE", "UC"),
+  name = c(
+    "MAYNAS", 
+    "LORETO", 
+    "DATEM DEL MARANON", 
+    "MARISCAL RAMON CASTILLA", 
+    "ALTO AMAZONAS", 
+    "REQUENA", 
+    "UCAYALI"
+  ),
+  stringsAsFactors = FALSE
+)
+
+
+ db_vx_pfro                                                                         %>%
+ rbind(fitted_vx_pfro) %>% 
+ mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+        .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+        .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+        .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+        
+        
+        ) %>% 
+ ungroup()                                                                             %>% 
+filter(.model_desc %in% c("ACTUAL",model.selected))                                         %>% 
+ggplot()                                                        +
+geom_line(aes(x=.index,y=.value,color=.model_desc))             +
+geom_ribbon(aes( x   =  .index,
+                 ymin = .conf_lo,
+                 ymax = .conf_hi,
+                fill=  .model_desc),alpha=0.5)                  +
+scale_fill_manual("Model",values = c("#231E23","firebrick4"))                 +   
+scale_color_manual("Model",values = c("#231E23","firebrick4"))                +
+geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")   +
+theme(  
+      axis.line = element_line(color = "black"),
+      axis.line.x = element_line(colour = "black"), 
+      axis.line.y = element_line(colour = "black"), 
+      panel.grid            = element_blank(),
+      panel.grid.major      = element_line(colour = "transparent"), 
+      panel.grid.minor      = element_line(colour = "transparent"), 
+      panel.background    = element_blank(),
+      legend.key            = element_rect(fill="transparent", colour=NA),
+      legend.key.size       = unit(1.2, "lines"), 
+      legend.key.height     = NULL, 
+      legend.key.width      = NULL,
+      strip.placement       = "inside", 
+      strip.placement.x     = NULL, 
+      strip.placement.y     = NULL, 
+      strip.switch.pad.grid = unit(0.1, "cm"), 
+      strip.switch.pad.wrap = unit(0.1, "cm"),
+      strip.background      = element_blank())  +
+  xlab(" ")+
+  ylab("Incidence")+
+  geom_vline(xintercept =as.Date("2006-01-01"), linetype = "dashed", alpha = 0.6)+
+  annotate("text", x = as.Date("2008-04-01"), y = 6000, label = "Intervention", size=3)+
+              labs(title = "A) P. Vivax") +
+              theme(plot.title = element_text(hjust = 0, face = "bold"))
+
+
+```
+
+
+#### Falciparum
+
+
+```{r,message=F,warning=F,fig.width=10,fig.height=7}
+
+library(geofacet)
+library(tidyverse)
+
+
+loreto_grid <- data.frame(
+  row  = c(2, 3, 3, 3, 4, 4, 5) - 1,
+  col  = c(2, 2, 1, 3, 1, 2, 2),
+  code = c("MA", "LO", "DM", "RC", "AA", "RE", "UC"),
+  name = c(
+    "MAYNAS", 
+    "LORETO", 
+    "DATEM DEL MARANON", 
+    "MARISCAL RAMON CASTILLA", 
+    "ALTO AMAZONAS", 
+    "REQUENA", 
+    "UCAYALI"
+  ),
+  stringsAsFactors = FALSE
+)
+
+
+db_flpm_pfro                                                          %>% 
+rbind(fitted_flpm_pfro) %>% 
+mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+        .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+        .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+        .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+       
+       ) %>% 
+ungroup()                                                        %>% 
+filter(.model_desc %in% c("ACTUAL",model.selected))       %>% 
+ggplot()                                                        +
+geom_line(aes(x=.index,y=.value,color=.model_desc))             +
+geom_ribbon(aes( x   =  .index,
+                 ymin = .conf_lo,
+                 ymax = .conf_hi,
+                fill=  .model_desc),alpha=0.5)                  +
+scale_fill_manual("Model",values = c("#231E23","firebrick4"))                 +   
+scale_color_manual("Model",values = c("#231E23","firebrick4"))                +
+geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")   +
+theme(  
+      axis.line = element_line(color = "black"),
+      axis.line.x = element_line(colour = "black"), 
+      axis.line.y = element_line(colour = "black"), 
+      panel.grid            = element_blank(),
+      panel.grid.major      = element_line(colour = "transparent"), 
+      panel.grid.minor      = element_line(colour = "transparent"), 
+      panel.background    = element_blank(),
+      legend.key            = element_rect(fill="transparent", colour=NA), 
+      legend.key.size       = unit(1.2, "lines"), 
+      legend.key.height     = NULL, 
+      legend.key.width      = NULL,
+      strip.placement       = "inside", 
+      strip.placement.x     = NULL, 
+      strip.placement.y     = NULL, 
+      strip.switch.pad.grid = unit(0.1, "cm"), 
+      strip.switch.pad.wrap = unit(0.1, "cm"),
+      strip.background      = element_blank())  +
+  xlab(" ")+
+  ylab("Incidence")+
+  geom_vline(xintercept =as.Date("2006-01-01"), linetype = "dashed", alpha = 0.6)+
+  annotate("text", x = as.Date("2008-04-01"), y = 3500, label = "Intervention",size=3)+
+              labs(title = "B) P. Falciparum") +
+              theme(plot.title = element_text(hjust = 0, face = "bold"))
+
+
+
+```
+
+
+
+### MALARIA CERO{.tabset}
+
+#### Vivax
+
+```{r,message=F,warning=F,fig.width=10,fig.height=10}
+
+model.selected <-"PROPHET"
+
+library(geofacet)
+library(tidyverse)
+
+
+loreto_grid <- data.frame(
+  row  = c(2, 3, 3, 3, 4, 4, 5) - 1,
+  col  = c(2, 2, 1, 3, 1, 2, 2),
+  code = c("MA", "LO", "DM", "RC", "AA", "RE", "UC"),
+  name = c(
+    "MAYNAS", 
+    "LORETO", 
+    "DATEM DEL MARANON", 
+    "MARISCAL RAMON CASTILLA", 
+    "ALTO AMAZONAS", 
+    "REQUENA", 
+    "UCAYALI"
+  ),
+  stringsAsFactors = FALSE
+)
+
+
+ db_vx_mcero                                                         %>%
+ rbind(fitted_vx_mcero) %>% 
+ mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+        .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+        .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+ ungroup()                                                       %>% 
+filter(.model_desc %in% c("ACTUAL",model.selected))       %>% 
+ggplot()                                                        +
+geom_line(aes(x=.index,y=.value,color=.model_desc))             +
+geom_ribbon(aes( x   =  .index,
+                 ymin = .conf_lo,
+                 ymax = .conf_hi,
+                fill=  .model_desc),alpha=0.5)                  +
+scale_fill_manual("Model",values = c("#231E23","darkgoldenrod3"))                 +   
+scale_color_manual("Model",values = c("#231E23","darkgoldenrod3"))                +
+geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")   +
+theme(  
+      axis.line = element_line(color = "black"),
+      axis.line.x = element_line(colour = "black"), 
+      axis.line.y = element_line(colour = "black"), 
+      panel.grid            = element_blank(),
+      panel.grid.major      = element_line(colour = "transparent"), 
+      panel.grid.minor      = element_line(colour = "transparent"), 
+      panel.background    = element_blank(),
+      legend.key            = element_rect(fill="transparent", colour=NA),
+      legend.key.size       = unit(1.2, "lines"), 
+      legend.key.height     = NULL, 
+      legend.key.width      = NULL,
+      strip.placement       = "inside", 
+      strip.placement.x     = NULL, 
+      strip.placement.y     = NULL, 
+      strip.switch.pad.grid = unit(0.1, "cm"), 
+      strip.switch.pad.wrap = unit(0.1, "cm"),
+      strip.background      = element_blank())  +
+  xlab(" ")+
+  ylab("Incidence")+
+  geom_vline(xintercept =as.Date("2017-01-01"), linetype = "dashed", alpha = 0.6)+
+  annotate("text", x = as.Date("2018-07-01"), y = 4000, label = "Intervention", size=3)
+
+
+```
+
+
+#### Falciparum
+
+
+```{r,message=F,warning=F,fig.width=10,fig.height=10}
+
+library(geofacet)
+library(tidyverse)
+
+
+loreto_grid <- data.frame(
+  row  = c(2, 3, 3, 3, 4, 4, 5) - 1,
+  col  = c(2, 2, 1, 3, 1, 2, 2),
+  code = c("MA", "LO", "DM", "RC", "AA", "RE", "UC"),
+  name = c(
+    "MAYNAS", 
+    "LORETO", 
+    "DATEM DEL MARANON", 
+    "MARISCAL RAMON CASTILLA", 
+    "ALTO AMAZONAS", 
+    "REQUENA", 
+    "UCAYALI"
+  ),
+  stringsAsFactors = FALSE
+)
+
+
+db_flpm_mcero                                                          %>% 
+rbind(fitted_flpm_mcero) %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+        .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+        .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
+ungroup()                                                        %>% 
+filter(.model_desc %in% c("ACTUAL",model.selected))       %>% 
+ggplot()                                                        +
+geom_line(aes(x=.index,y=.value,color=.model_desc))             +
+geom_ribbon(aes( x   =  .index,
+                 ymin = .conf_lo,
+                 ymax = .conf_hi,
+                fill=  .model_desc),alpha=0.5)                  +
+scale_fill_manual("Model",values = c("black","darkgoldenrod3"))                 +   
+scale_color_manual("Model",values = c("black","darkgoldenrod3"))                +
+geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")   +
+theme(  
+      axis.line = element_line(color = "black"),
+      axis.line.x = element_line(colour = "black"), 
+      axis.line.y = element_line(colour = "black"), 
+      panel.grid            = element_blank(),
+      panel.grid.major      = element_line(colour = "transparent"), 
+      panel.grid.minor      = element_line(colour = "transparent"), 
+      panel.background    = element_blank(),
+      legend.key            = element_rect(fill="transparent", colour=NA),
+      legend.key.size       = unit(1.2, "lines"), 
+      legend.key.height     = NULL, 
+      legend.key.width      = NULL,
+      strip.placement       = "inside", 
+      strip.placement.x     = NULL, 
+      strip.placement.y     = NULL, 
+      strip.switch.pad.grid = unit(0.1, "cm"), 
+      strip.switch.pad.wrap = unit(0.1, "cm"),
+      strip.background      = element_blank())  +
+  xlab(" ")+
+  ylab("Incidence")+
+  geom_vline(xintercept =as.Date("2017-01-01"), linetype = "dashed", alpha = 0.6)+
+  annotate("text", x = as.Date("2018-07-01"), y = 4000, label = "Intervention",size=3)
+
+
+
+```
+
+
+
+
+
+## Map{.tabset}
+
+* Acumulado de brecha de casos por provincia
+* O-E : Observados - Esperados(forecast)
+
+### PAMAFRO
+
+#### Vivax
+
+```{r,message=F,warning=F}
+
+
+db.shp.pfro      <-  peru_prov_shp                                            %>% 
+                inner_join(db.full.prov.error.tbl_vx_pfro,by=c("prov"="id"))    
+
+
+library(pals)
+db.shp.pfro                                           %>% 
+ggplot()                                          +
+geom_sf(aes(fill=dif_pht))                       +
+scale_fill_gradient2(low = "brown",
+                     mid = "white",     
+                     high = "gray48",    
+                     midpoint = 0,
+                               "Variacion\nde casos\n(O-E)",
+                     breaks = c(-40000,-30000,-20000,-10000,0)) +
+  labs(title = "A) P. Vivax") + 
+theme_bw() +
+  theme(plot.title = element_text(hjust = 0, face = "bold"))
+
+
+
+```
+
+#### Falciparum
+
+
+```{r,message=F,warning=F}
+
+
+db.shp.pfro      <-  peru_prov_shp                                            %>% 
+                inner_join(db.full.prov.error.tbl_flpm_pfro,by=c("prov"="id"))    
+
+
+library(pals)
+db.shp.pfro                                           %>% 
+ggplot()                                          +
+geom_sf(aes(fill=dif_pht))                       +
+scale_fill_gradient2(low = "brown",
+                     mid = "white",     
+                     high = "gray48",  
+                     midpoint = 0,
+                               "Variacion\nde casos\n(O-E)",
+                     breaks = c(-17000,-13500,-10000,-6500,-3000,0)
+                     ) +
+  labs(title = "B) P. Falciparum") + 
+theme_bw() +
+  theme(plot.title = element_text(hjust = 0, face = "bold"))
+
+
+
+```
+
+
+### MALARIA CERO
+
+#### Vivax
+
+```{r,message=F,warning=F}
+
+
+
+
+db.shp.mcero      <-  peru_prov_shp                                            %>% 
+                inner_join(db.full.prov.error.tbl_vx_mcero,by=c("prov"="id"))    
+
+
+library(pals)
+db.shp.mcero                                           %>% 
+ggplot()                                          +
+geom_sf(aes(fill=dif_pht))                       +
+scale_fill_gradient2( low = "gold3",  
+                      mid = "white", 
+                      high = "gray48",  
+                     midpoint = 0,
+                               "Variacion\nde casos\n(O-E)",
+                     breaks = c(-6000,-4500,-3000,-1500,0,1500)) +
+theme_bw()+
+  labs(title = "A) P. Vivax") + 
+theme_bw() +
+  theme(plot.title = element_text(hjust = 0, face = "bold"))
+
+
+
+```
+
+#### Falciparum
+
+
+```{r,message=F,warning=F}
+
+
+
+
+db.shp.mcero      <-  peru_prov_shp                                            %>% 
+                inner_join(db.full.prov.error.tbl_flpm_mcero,by=c("prov"="id"))    
+
+
+library(pals)
+db.shp.mcero                                           %>% 
+ggplot()                                          +
+geom_sf(aes(fill=dif_pht))                       +
+scale_fill_gradient2( low = "gold3",  
+                      mid = "white", 
+                      high = "gray48",  
+                     midpoint = 0,
+                               "Variacion\nde casos\n(O-E)",
+                     breaks = c(-5000,-4000,-3000,-2000,-1000,0)
+                     ) +
+theme_bw() +
+  labs(title = "B) P. Falciparum") + 
+theme_bw() +
+  theme(plot.title = element_text(hjust = 0, face = "bold"))
+
+
+
+```
+
+
+
+
+
+
+
+
+## Heatmap{.tabset}
+
+### PAMAFRO{.tabset}
+
+#### Falciparum
+
+```{r,message=F,warning=F,fig.height=5,fig.width=10}
+
+# OPTION A
+
+library(viridis)
+db.heat.flpm.pfro <- db.prov.error.tbl_flpm_pfro               %>% 
+                     mutate(date_str  =  as.character(.index),
+                            date_str2 = as.character(zoo::as.yearmon(.index)),
+                            month       = month(.index),
+                            year        = year(.index)
+                     ) 
+
+
+
+db.heat.flpm.pfro  %>% 
+ungroup() %>% 
+ggplot()+
+geom_tile(aes(x=date_str,y=id,fill = dif_pht),lwd = 0.3,color = "black",
+            linetype = 1) +
+scale_fill_viridis(option = "B",
+                   discrete = FALSE,
+                   name = " Cases\n variation \n (O - E)")+
+xlab(" ")+
+ylab(" ")+
+theme(                panel.border = element_blank(),
+                      legend.position ="top",
+                plot.title = element_text(color = "burlywood4", 
+                                          face = "bold", hjust=0),
+                panel.background = element_rect(fill = "white",
+                                                colour = NA),
+                plot.background = element_rect(fill = "white"),
+                panel.grid.major = element_line(colour = "#8F8F8F",
+                                                linetype = "dotted"),
+                panel.grid.minor = element_line(colour = "#EBEBEB"),
+                axis.text.x =  element_blank()
+                )+
+  annotate(geom = "text", x = seq(1,60,1),y=0.1,
+               label = as.character(rep(seq(1,12),5)), size = 3) +
+   annotate(geom = "text", x = c(6,18,30,42,54), y = -0.7,
+            label = unique(db.heat.flpm.pfro$year), size = 3) +
+  annotate(geom = "text", x = c(6,18,30,42,54), y = -1.1,
+            label = c(" "," "," "," "," "), size = 4) +
+  
+  coord_fixed()
+
+```
+
+#### Vivax
+
+```{r,message=F,warning=F,fig.height=5,fig.width=10}
+
+# 
+
+library(viridis)
+
+db.heat.vx.pfro <- db.prov.error.tbl_vx_pfro               %>% 
+                     mutate(date_str  =  as.character(.index),
+                            date_str2 = as.character(zoo::as.yearmon(.index)),
+                            month       = month(.index),
+                            year        = year(.index)
+                     ) 
+
+
+
+db.heat.vx.pfro  %>% 
+ungroup() %>% 
+ggplot()+
+geom_tile(aes(x=date_str,y=id,fill = dif_pht),lwd = 0.3,color = "black",
+            linetype = 1) +
+scale_fill_viridis(option = "B",
+                   discrete = FALSE,
+                   name = " Cases\n variation \n (O - E)")+
+xlab(" ")+
+ylab(" ")+
+theme(                panel.border = element_blank(),
+                      legend.position ="top",
+                plot.title = element_text(color = "burlywood4", 
+                                          face = "bold", hjust=0),
+                panel.background = element_rect(fill = "white",
+                                                colour = NA),# #EBEBEB
+                plot.background = element_rect(fill = "white"),
+                panel.grid.major = element_line(colour = "#8F8F8F",
+                                                linetype = "dotted"),
+                panel.grid.minor = element_line(colour = "#EBEBEB"),
+                #axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+                axis.text.x =  element_blank()
+                )+
+  annotate(geom = "text", x = seq(1,60,1),y=0.1,
+               label = as.character(rep(seq(1,12),5)), size = 3) +
+   annotate(geom = "text", x = c(6,18,30,42,54), y = -0.7,
+            label = unique(db.heat.vx.pfro$year), size = 3) +
+  annotate(geom = "text", x = c(6,18,30,42,54), y = -1.1,
+            label = c(" "," "," "," "," "), size = 4) +
+  
+  #rectangulos compactos 
+  coord_fixed()
+
+```
+
+
+
+### MALARIA CERO{.tabset}
+
+#### Falciparum
+
+```{r,message=F,warning=F,fig.height=5,fig.width=10}
+
+
+
+db.heat.flpm.mcero <- db.prov.error.tbl_flpm_mcero               %>% 
+                     mutate(date_str  =  as.character(.index),
+                            date_str2 = as.character(zoo::as.yearmon(.index)),
+                            month       = month(.index),
+                            year        = year(.index)
+                     ) 
+
+
+
+db.heat.flpm.mcero  %>% 
+ungroup() %>% 
+ggplot()+
+geom_tile(aes(x=date_str,y=id,fill = dif_pht),lwd = 0.3,color = "black",
+            linetype = 1) +#,space="free"
+scale_fill_gradient(
+    low = "#d24633",
+    high = "#dbcf93",
+    na.value = "grey80",name=" Cases\n variation \n (O - E)")+
+xlab(" ")+
+ylab(" ")+
+theme(                panel.border = element_blank(),
+                      legend.position ="top",
+                plot.title = element_text(color = "burlywood4", 
+                                          face = "bold", hjust=0),
+                panel.background = element_rect(fill = "white",
+                                                colour = NA),# #EBEBEB
+                plot.background = element_rect(fill = "white"),
+                panel.grid.major = element_line(colour = "#8F8F8F",
+                                                linetype = "dotted"),
+                panel.grid.minor = element_line(colour = "#EBEBEB"),
+                #axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+                axis.text.x =  element_blank()
+                )+
+  annotate(geom = "text", x = seq(1,36,1),y=0.1,
+               label = as.character(rep(seq(1,12),3)), size = 3) +
+   annotate(geom = "text", x = c(6,18,30), y = -0.4,
+            label = unique(db.heat.flpm.mcero$year), size = 3) +
+  annotate(geom = "text", x = c(6,18,30), y = -0.7,
+            label = c(" "," "," "), size = 6) +
+  
+  #rectangulos compactos 
+  coord_fixed()
+
+```
+
+#### Vivax
+
+```{r,message=F,warning=F,fig.height=8,fig.width=10}
+
+# OPTION A
+
+library(viridis)
+db.heat.vx.mcero <- db.prov.error.tbl_vx_mcero               %>% 
+                     mutate(date_str  =  as.character(.index),
+                            date_str2 = as.character(zoo::as.yearmon(.index)),
+                            month       = month(.index),
+                            year        = year(.index)
+                     ) 
+
+
+
+db.heat.vx.mcero  %>% 
+ungroup() %>% 
+ggplot()+
+geom_tile(aes(x=date_str,y=id,fill = dif_pht),lwd = 0.3,color = "black",
+            linetype = 1) +#,space="free"
+scale_fill_gradient(
+    low = "#d24633",
+    high = "#dbcf93",
+    na.value = "grey80",name=" Cases\n variation \n (O - E)")+
+xlab(" ")+
+ylab(" ")+
+theme(                panel.border = element_blank(),
+                      legend.position ="top",
+                plot.title = element_text(color = "burlywood4", 
+                                          face = "bold", hjust=0),
+                panel.background = element_rect(fill = "white",
+                                                colour = NA),# #EBEBEB
+                plot.background = element_rect(fill = "white"),
+                panel.grid.major = element_line(colour = "#8F8F8F",
+                                                linetype = "dotted"),
+                panel.grid.minor = element_line(colour = "#EBEBEB"),
+                axis.text.x =  element_blank()
+                )+
+  annotate(geom = "text", x = seq(1,36,1),y=0.1,
+               label = as.character(rep(seq(1,12),3)), size = 3) +
+   annotate(geom = "text", x = c(6,18,30), y = -0.4,
+            label = unique(db.heat.vx.mcero$year), size = 3) +
+  annotate(geom = "text", x = c(6,18,30), y = -0.7,
+            label = c(" "," "," "), size = 6) +
+  
+  #rectangulos compactos 
+  coord_fixed()
+
+```
+
+
+# BOXPLOT by specie
+
+```{r,message=F,warning=F,fig.height=8}
+
+tbl.error.vx.box <- rbind(db.prov.error.tbl_vx_pfro %>% mutate(intervention="PAMAFRO"),
+                      db.prov.error.tbl_vx_mcero%>% mutate(intervention="MALARIA CERO")) %>% 
+                    mutate(intervention = ifelse(intervention =="MALARIA CERO","PMC","PAMAFRO"))
+
+tbl.error.flpm.box <- rbind(db.prov.error.tbl_flpm_pfro %>% mutate(intervention="PAMAFRO"),
+                      db.prov.error.tbl_flpm_mcero %>% mutate(intervention="MALARIA CERO"))%>% 
+                    mutate(intervention = ifelse(intervention =="MALARIA CERO","PMC","PAMAFRO"))
+
+
+library(viridis)
+library(ggpubr)
+
+library(ggthemes)
+(plot.v   <-ggplot(tbl.error.vx.box, 
+                  aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
+                      y    =  dif_pht,
+                      #fill =  intervention,
+                      col  =  intervention ))                                   +
+           geom_boxplot(outlier.shape = NA)                                     +
+           geom_point(aes(color    = intervention),
+                          width=0.15, alpha=.60,
+                          position = position_jitterdodge())                    +
+    scale_fill_manual( values=c("#DC0000B2","gold"))                          +
+    scale_color_manual(values=c("#DC0000B2","gold"))                          + 
+    xlab(" ")                                                                   +
+    ylab("Cases variation (O-E)")                                               +
+    theme_stata(scheme = "s1mono")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                plot.title = element_text(size = 15, face = "bold",hjust = 0))+  
+    labs(title="A) P. Vivax")
+)
+
+
+```
+
+
+```{r,message=F,warning=F,fig.height=8}
+
+
+(plot.f   <-ggplot(tbl.error.flpm.box, 
+                  aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
+                      y    =  dif_pht,
+                      #fill =  intervention,
+                      col  =  intervention ))                                   +
+           geom_boxplot(outlier.shape = NA)                                     +
+           geom_point(aes(color    = intervention),
+                          width=0.15, alpha=.60,
+                          position = position_jitterdodge())                    +
+    scale_fill_manual( values=c("#DC0000B2","gold"))                          +
+    scale_color_manual(values=c("#DC0000B2","gold"))                          + 
+    xlab(" ")                                                                   +
+    ylab("Cases variation (O-E)")                                               +
+    theme_stata(scheme = "s1mono")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                plot.title = element_text(size = 15, face = "bold",hjust = 0))+  
+    labs(title="A) P. Falciparum")
+)
+
+```
+
+
+
+## PAMAFRO
+
+
+```{r,message=F,warning=F,fig.height=8}
+tbl.error.pfro.box <- rbind(db.prov.error.tbl_vx_pfro %>% mutate(Specie="P.Vivax"),
+                          db.prov.error.tbl_flpm_pfro %>% mutate(Specie="P.falciparum"))
+
+
+
+
+
+library(viridis)
+library(ggpubr)
+
+library(ggthemes)
+(plot.v   <-ggplot(tbl.error.pfro.box, 
+                  aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
+                      y    =  dif_pht,
+                      #fill =  intervention,
+                      col  =  Specie ))                                   +
+           geom_boxplot(outlier.shape = NA)                                     +
+           geom_point(aes(color    = Specie),
+                          width=0.15, alpha=.60,
+                          position = position_jitterdodge())                    +
+    scale_fill_manual( values=c("#DC0000B2","darkred"))                          +
+    scale_color_manual(values=c("#DC0000B2","darkred"))                          + 
+    xlab(" ")                                                                   +
+    ylab("Cases variation (O-E)")                                               +
+    theme_stata(scheme = "s1mono")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                plot.title = element_text(size = 15, face = "bold",hjust = 0),
+          legend.position = "bottom")+  
+    labs(title="A) PAMAFRO")
+)
+
+
+
+
+```
+
+
+## MALARIA CERO
+
+```{r,message=F,warning=F,fig.height=8}
+
+tbl.error.flpm.box <- rbind(db.prov.error.tbl_vx_mcero %>% mutate(Specie="MALARIA CERO"),
+                      db.prov.error.tbl_flpm_mcero %>% mutate(Specie="MALARIA CERO"))
+
+
+library(viridis)
+library(ggpubr)
+
+library(ggthemes)
+(plot.v   <-ggplot(tbl.error.pfro.box, 
+                  aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
+                      y    =  dif_pht,
+                      #fill =  intervention,
+                      col  =  Specie ))                                   +
+           geom_boxplot(outlier.shape = NA)                                     +
+           geom_point(aes(color    = Specie),
+                          width=0.15, alpha=.60,
+                          position = position_jitterdodge())                    +
+    scale_fill_manual( values=c("yellow","gold3"))                          +
+    scale_color_manual(values=c("yellow","gold3"))                          + 
+    xlab(" ")                                                                   +
+    ylab("Cases variation (O-E)")                                               +
+    theme_stata(scheme = "s1mono")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                plot.title = element_text(size = 15, face = "bold",hjust = 0),
+          legend.position = "bottom")+  
+    labs(title="B) PMC")
+)
+
+
+
+
+
+
+```
+
