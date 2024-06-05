@@ -9,7 +9,22 @@ Study description
 This study proposes that malaria interventions were effective in reducing malaria incidence during the period of their effectiveness, even when considering seasonal climate factors such as temperature and precipitation. We assessed the effectiveness of these interventions using monthly malaria incidence data for Plasmodium vivax and P. falciparum in Loreto, Peru (2001–2019). Employing a two-stage machine learning model, we examined how both the **"Plan Malaria Cero"** and **PAMAFRO** interventions contributed to reducing malaria incidence.
 
 
+
 ----------------
+
+## Repository structure
+
+- [analysis](analysis) `R` markdowns and outputs.
+  - [02_Calculate_ML.Rmd](analysis/02_Calculate_ML.Rmd) `R` markdown for data preparation and preprocessing.
+  - [03_Results.Rmd](analysis/03_Results.Rmd) `R` markdown to present the results of the data analysis.
+- renv
+- .Rprofile
+- .gitignore
+- README.md
+- [ITS_ML.Rproj](ITS_ML.Rproj) `R` project file.
+
+----------------
+
 
 ## `R` environment and version
 
