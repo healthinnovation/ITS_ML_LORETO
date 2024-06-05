@@ -23,12 +23,12 @@ os             mingw32
 system         x86_64, mingw32             
 status                                     
 major          4                           
-minor          1.0                         
-year           2021                        
-month          05                          
-day            18                          
-svn rev        80317                       
+minor          3.1                         
+year           2023                        
+month          06                          
+day            16                          
+svn rev        84548                      
 language       R                           
-version.string R version 4.1.0 (2021-05-18)
-nickname       Camp Pontanezen 
+version.string R version 4.3.1 (2023-06-16 ucrt)
+nickname       Beagle Scouts 
 ```
