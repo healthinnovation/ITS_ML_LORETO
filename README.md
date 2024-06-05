@@ -17,9 +17,7 @@ This study proposes that malaria interventions were effective in reducing malari
 - [analysis](analysis) `R` markdowns and outputs.
   - [02_Calculate_ML.Rmd](02_Calculate_ML.Rmd) `R` markdown for data preparation,preprocessing and model building.
   - [03_Results.Rmd](03_Results.Rmd) `R` markdown to present the results of the data analysis.
-- renv
 - .Rprofile
-- .gitignore
 - README.md
 - [ITS_ML.Rproj](ITS_ML.Rproj) `R` project file.
 
