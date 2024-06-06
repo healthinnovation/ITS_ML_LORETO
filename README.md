@@ -22,16 +22,21 @@ This study proposes that malaria interventions were effective in reducing malari
 - [ITS_ML.Rproj](ITS_ML.Rproj) `R` project file.
 
 ----------------
-
+<details>
+  <summary>Data</summary>
+</details>
+  
 <details>
   <summary>analysis</summary>
   <ul>
-    <li><a href="https://www.typescriptlang.org/">Typescript</a></li>
-    <li><a href="https://nextjs.org/">Next.js</a></li>
-    <li><a href="https://reactjs.org/">React.js</a></li>
-    <li><a href="https://tailwindcss.com/">TailwindCSS</a></li>
+    <li><a href="https://www.typescriptlang.org/">02_Calculate_ML</a></li>
+    <li><a href="https://nextjs.org/">03_Results</a></li>
   </ul>
 </details>
+
+- .Rprofile
+- README.md
+- [ITS_ML.Rproj](ITS_ML.Rproj) `R` project file.
 
 
 
