@@ -2017,12 +2017,75 @@ theme(plot.title = element_text(hjust = 0, face = "bold"))
 
 
 
-
-
-
-
-
 # BOXPLOT by specie
+
+## Vivax
+
+```{r,message=F,warning=F,fig.height=8}
+
+tbl.error.vx.box <- rbind(db.prov.error.tbl_vx_pfro %>% mutate(intervention="PAMAFRO"),
+                      db.prov.error.tbl_vx_mcero%>% mutate(intervention="MALARIA CERO")) %>% 
+                    mutate(intervention = ifelse(intervention =="MALARIA CERO","PMC","PAMAFRO"))
+
+tbl.error.flpm.box <- rbind(db.prov.error.tbl_flpm_pfro %>% mutate(intervention="PAMAFRO"),
+                      db.prov.error.tbl_flpm_mcero %>% mutate(intervention="MALARIA CERO"))%>% 
+                    mutate(intervention = ifelse(intervention =="MALARIA CERO","PMC","PAMAFRO"))
+
+
+library(viridis)
+library(ggpubr)
+
+library(ggthemes)
+(plot.v   <-ggplot(tbl.error.vx.box, 
+                  aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
+                      y    =  dif_pht,
+                      col  =  intervention ))                                   +
+           geom_boxplot(outlier.shape = NA)                                     +
+           geom_point(aes(color    = intervention),
+                          width=0.15, alpha=.60,
+                          position = position_jitterdodge())                    +
+    scale_fill_manual( values=c("#DC0000B2","gold"))                          +
+    scale_color_manual(values=c("#DC0000B2","gold"))                          + 
+    xlab(" ")                                                                   +
+    ylab("Cases variation (O-E)")                                               +
+    theme_stata(scheme = "s1mono")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                plot.title = element_text(size = 15, face = "bold",hjust = 0))+  
+    labs(title="A) P. Vivax")
+)
+```
+
+
+## Falciparum
+
+
+```{r,message=F,warning=F,fig.height=8}
+
+(plot.f   <-ggplot(tbl.error.flpm.box, 
+                  aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
+                      y    =  dif_pht,
+                      col  =  intervention ))                                   +
+           geom_boxplot(outlier.shape = NA)                                     +
+           geom_point(aes(color    = intervention),
+                          width=0.15, alpha=.60,
+                          position = position_jitterdodge())                    +
+    scale_fill_manual( values=c("#DC0000B2","gold"))                          +
+    scale_color_manual(values=c("#DC0000B2","gold"))                          + 
+    xlab(" ")                                                                   +
+    ylab("Cases variation (O-E)")                                               +
+    theme_stata(scheme = "s1mono")+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                plot.title = element_text(size = 15, face = "bold",hjust = 0))+  
+    labs(title="A) P. Falciparum")
+)
+
+```
+
+
+
+
+
+# BOXPLOT by intervention
 
 ```{r,message=F,warning=F,fig.height=8}
 
