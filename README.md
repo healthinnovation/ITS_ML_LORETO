@@ -44,9 +44,9 @@ This study proposes that malaria interventions were effective in reducing malari
 
   </ul>
   <ul>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/fit_preintervention"> fit_preintervention </a></li> Fitted values in comparison to training dataset
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/forecast_intervention"> forecast_intervention </a></li> Forecasted values in comparison to test dataset
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/models_postuning"> models_postuning  </a></li> Models per intervention per specie
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/fit_preintervention"> fit_preintervention </a></li> Folder with the fitted values in comparison to training dataset
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/forecast_intervention"> forecast_intervention </a></li> Folder with the forecasted values in comparison to test dataset
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/models_postuning"> models_postuning  </a></li> Folder with the models per intervention per specie
   </ul>
 </details>
 
