@@ -24,13 +24,15 @@ This study proposes that malaria interventions were effective in reducing malari
 ----------------
 <details>
   <summary>Data</summary>
+  Data Employed to reproduce the results
 </details>
   
 <details>
   <summary>analysis</summary>
+  `R` markdowns and outputs.
   <ul>
-    <li><a href="https://www.typescriptlang.org/">02_Calculate_ML</a></li>
-    <li><a href="https://nextjs.org/">03_Results</a></li>
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/02_Calculate_ML.Rmd">02_Calculate_ML</a></li>
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/03_Results.Rmd">03_Results</a></li>
   </ul>
 </details>
 
