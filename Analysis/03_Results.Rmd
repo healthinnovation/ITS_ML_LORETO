@@ -1584,7 +1584,7 @@ $$
 
 
 
-## Time series plot by prov {.tabset}
+## Figure 1 - Figure S1: Time series plot by prov {.tabset}
 
 ### PAMAFRO{.tabset}
 
@@ -1887,7 +1887,7 @@ theme(
 
 
 
-## Map{.tabset}
+## Figure 2 - Figure S2: Spatial distribution{.tabset}
 
 * Acumulated cases per province
 * O-E : Real - Expected (forecast)
@@ -2017,7 +2017,7 @@ theme(plot.title = element_text(hjust = 0, face = "bold"))
 
 
 
-# BOXPLOT by specie
+# Figure S3-S4: BOXPLOT by specie
 
 ## Vivax
 
@@ -2085,7 +2085,7 @@ library(ggthemes)
 
 
 
-# BOXPLOT by intervention
+# Figure S3-S4: BOXPLOT by intervention
 
 ```{r,message=F,warning=F,fig.height=8}
 
