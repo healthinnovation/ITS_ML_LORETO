@@ -13,7 +13,7 @@ This study proposes that malaria interventions were effective in reducing malari
 ----------------
 
 ## Repository structure
-
+- [Data](analysis) Data Employed to reproduce the results
 - [analysis](analysis) `R` markdowns and outputs.
   - [02_Calculate_ML.Rmd](02_Calculate_ML.Rmd) `R` markdown for data preparation,preprocessing and model building.
   - [03_Results.Rmd](03_Results.Rmd) `R` markdown to present the results of the data analysis.
