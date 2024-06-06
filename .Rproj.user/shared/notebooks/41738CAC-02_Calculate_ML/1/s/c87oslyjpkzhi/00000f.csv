@@ -1,0 +1,4 @@
+"0","db.pamafro        <- readRDS(""db_loreto_its.rds"")
+"
+"2","Error in gzfile(file, ""rb"") : cannot open the connection
+"
