@@ -12,6 +12,10 @@ date: "2024-05-3"
 
 ```{r,message=F,warning=F}
 
+# Due to data security regulations from the Ministry of Health of Peru, 
+# we are unable to share all the data. Only data from Maynas was provided. 
+# Thank you for your understanding.
+
 library(tidymodels)
 library(modeltime)
 library(timetk)
