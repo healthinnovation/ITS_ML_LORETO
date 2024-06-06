@@ -20,21 +20,27 @@ This study proposes that malaria interventions were effective in reducing malari
 <details>
   <summary>Data</summary>
   Data Employed to reproduce the results
+  <ul>
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Data/db_loreto_its.rds">db_loreto_its.rds </a></li> 
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Data/peru.rds"> peru.rds  </a></li> 
+  </ul>
 </details>
+
+
   
 <details>
   <summary> Analysis </summary>
    R markdowns and outputs. 
   <ul>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/02_Calculate_ML.Rmd">02_Calculate_ML `R` markdown for data preparation,preprocessing and model building. </a></li>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/03_Results.Rmd">03_Results `R` markdown to present the results of the data analysis. </a></li>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/fit_preintervention">Fitted values in comparison to training dataset </a></li>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/forecast_intervention">Forecasted values in comparison to test dataset </a></li>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/models_postuning"> Models per intervention per specie </a></li>
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/02_Calculate_ML.Rmd">02_Calculate_ML </a></li>  `R` markdown for data preparation,preprocessing and model building.
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/03_Results.Rmd">03_Results  </a></li> `R` markdown to present the results of the data analysis.
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/fit_preintervention"> fit_preintervention </a></li> Fitted values in comparison to training dataset
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/forecast_intervention"> forecast_intervention </a></li> Forecasted values in comparison to test dataset
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/models_postuning"> models_postuning  </a></li> Models per intervention per specie
   </ul>
 </details>
 
-- ..gitignore
+- .gitignore
 - .Rprofile
 - README.md
 - [ITS_ML.Rproj](ITS_ML.Rproj) `R` project file.
