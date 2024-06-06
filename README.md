@@ -15,7 +15,8 @@ This study proposes that malaria interventions contributed in reducing malaria i
 
 ----------------
 
-## Repository structure
+Repository structure
+================
 
 <details>
   <summary>Data</summary>
@@ -64,8 +65,8 @@ This study proposes that malaria interventions contributed in reducing malaria i
 ----------------
 
 
-## `R` environment and version
-
+`R` environment and version
+================
 Detailed information about the `R` environment and version used for running this project.
 
 ```bash
