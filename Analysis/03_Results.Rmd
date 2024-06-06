@@ -1905,19 +1905,19 @@ db.shp.pfro      <-  peru_prov_shp                                              
 
 
 
-db.shp.pfro                                                                     %>% 
-ggplot()                                                                         +
-geom_sf(aes(fill=dif_pht))                                                       +
-scale_fill_gradient2(low = "brown",
-                     mid = "white",     
-                     high = "gray48",    
-                     midpoint = 0,
-                               "Variacion\nde casos\n(O-E)",
-                     breaks = c(-40000,-30000,-20000,-10000,0))                 +
-labs(title = "A) P. Vivax")                                                   + 
-theme_bw()                                                                      +
-theme(plot.title = element_text(hjust = 0, face = "bold"))
-
+(Vivax.map <-  db.shp.pfro                                                                     %>% 
+              ggplot()                                                                         +
+              geom_sf(aes(fill=dif_pht))                                                       +
+              scale_fill_gradient2(low = "brown",
+                                   mid = "white",     
+                                   high = "gray48",    
+                                   midpoint = 0,
+                                             "Variacion\nde casos\n(O-E)",
+                                   breaks = c(-40000,-30000,-20000,-10000,0))                 +
+              labs(title = "A) P. Vivax")                                                   + 
+              theme_bw()                                                                      +
+              theme(plot.title = element_text(hjust = 0, face = "bold"))
+)
 
 
 ```
@@ -1932,7 +1932,7 @@ db.shp.pfro      <-  peru_prov_shp                                              
 
 
 
-db.shp.pfro                                                                     %>% 
+(Falciparum.map <-db.shp.pfro                                                                     %>% 
 ggplot()                                                                        +
 geom_sf(aes(fill=dif_pht))                                                      +
 scale_fill_gradient2(low = "brown",
@@ -1946,7 +1946,21 @@ scale_fill_gradient2(low = "brown",
 theme_bw()                                                                      +
   theme(plot.title = element_text(hjust = 0, face = "bold"))
 
+)
 
+```
+
+
+#### Both Species
+
+
+```{r,messsage=F,warning=F,fig.width=7,fig.height=10}
+
+
+library(ggpubr)
+figure2.map <- ggarrange(Vivax.map, Falciparum.map,
+                    ncol = 1, nrow = 2)
+figure2.map
 
 ```
 
@@ -1965,21 +1979,21 @@ db.shp.mcero      <-  peru_prov_shp                                             
 
 
 library(pals)
-db.shp.mcero                                                                    %>% 
-ggplot()                                                                        +
-geom_sf(aes(fill=dif_pht))                                                      +
-scale_fill_gradient2( low = "gold3",  
-                      mid = "white", 
-                      high = "gray48",  
-                     midpoint = 0,
-                               "Variacion\nde casos\n(O-E)",
-                     breaks = c(-6000,-4500,-3000,-1500,0,1500))                +
-theme_bw()                                                                      +
-labs(title = "A) P. Vivax")                                                     + 
-theme_bw()                                                                      +
-  theme(plot.title = element_text(hjust = 0, face = "bold"))
+(Vivax.mc.map<-db.shp.mcero                                                                    %>% 
+            ggplot()                                                                        +
+            geom_sf(aes(fill=dif_pht))                                                      +
+            scale_fill_gradient2( low = "gold3",  
+                                  mid = "white", 
+                                  high = "gray48",  
+                                 midpoint = 0,
+                                           "Variacion\nde casos\n(O-E)",
+                                 breaks = c(-6000,-4500,-3000,-1500,0,1500))                +
+            theme_bw()                                                                      +
+            labs(title = "A) P. Vivax")                                                     + 
+            theme_bw()                                                                      +
+              theme(plot.title = element_text(hjust = 0, face = "bold"))
 
-
+)
 
 ```
 
@@ -1989,33 +2003,45 @@ theme_bw()                                                                      
 
 ```{r,message=F,warning=F}
 
+library(pals)
 
 
 
-db.shp.mcero      <-  peru_prov_shp                                                   %>% 
+db.shp.mcero      <-  peru_prov_shp                                                              %>% 
                       inner_join(db.full.prov.error.tbl_flpm_mcero,by=c("prov"="id"))    
 
 
-library(pals)
-db.shp.mcero                                                                    %>% 
-ggplot()                                                                        +
-geom_sf(aes(fill=dif_pht))                                                      +
-scale_fill_gradient2( low = "gold3",  
-                      mid = "white", 
-                      high = "gray48",  
-                     midpoint = 0,
-                               "Variacion\nde casos\n(O-E)",
-                     breaks = c(-5000,-4000,-3000,-2000,-1000,0)
-                     )                                                          +
-labs(title = "B) P. Falciparum")                                                + 
-theme_bw()                                                                      +
-theme(plot.title = element_text(hjust = 0, face = "bold"))
+(Falciparum.mc.map<- db.shp.mcero                                                                %>% 
+                  ggplot()                                                                        +
+                  geom_sf(aes(fill=dif_pht))                                                      +
+                  scale_fill_gradient2( low = "gold3",  
+                                        mid = "white", 
+                                        high = "gray48",  
+                                       midpoint = 0,
+                                                 "Variacion\nde casos\n(O-E)",
+                                       breaks = c(-5000,-4000,-3000,-2000,-1000,0)
+                                       )                                                          +
+                  labs(title = "B) P. Falciparum")                                                + 
+                  theme_bw()                                                                      +
+                  theme(plot.title = element_text(hjust = 0, face = "bold"))
 
-
+)
 
 ```
 
 
+#### Both Species
+
+
+```{r,messsage=F,warning=F,fig.width=7,fig.height=10}
+
+
+library(ggpubr)
+figure2.mc.map <- ggarrange(Vivax.mc.map, Falciparum.mc.map,
+                    ncol = 1, nrow = 2)
+figure2.mc.map
+
+```
 
 # Figure S3-S4: BOXPLOT by specie
 
