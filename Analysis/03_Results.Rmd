@@ -283,11 +283,10 @@ library(geofacet)
 library(sf)
 
 
-# shapefile de una provincia
 Peru           <- readRDS("peru.rds")
-peru_prov_shp  <- Peru %>% 
-                  filter(dep=="LORETO") %>% 
-                  group_by(prov)        %>% 
+peru_prov_shp  <- Peru                   %>% 
+                  filter(dep=="LORETO")  %>% 
+                  group_by(prov)         %>% 
                   summarise()
 
 
@@ -296,28 +295,32 @@ db.error_vx_mcero          <-  db_vx_mcero                                      
                                group_by(.index,.model_desc)                                     %>% 
                                summarise(valor=sum(.value))    
 
-db.error.tbl_vx_mcero   <- db.error_vx_mcero                                 %>% 
-                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
-                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
-                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-                         ) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index>=as.Date("2017-01-01"))   
-##2
+db.error.tbl_vx_mcero   <-  db.error_vx_mcero                                                        %>% 
+                            mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                                   .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                                   .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                                   .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                                   )                                                                 %>% 
+                            pivot_wider(names_from=.model_desc,values_from = valor )                 %>%
+                            filter(.index>=as.Date("2017-01-01"))   
+
+####
+#2
+####
+
 db.prov.error_vx_mcero <- db_vx_mcero                                        %>% 
                          group_by(.index,id,.model_desc)                     %>% 
                          summarise(valor=sum(.value))
 
 
-db.prov.error.tbl_vx_mcero <- db.prov.error_vx_mcero                            %>% 
+db.prov.error.tbl_vx_mcero <- db.prov.error_vx_mcero                                            %>% 
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
                          .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-                         ) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index>=as.Date("2017-01-01")) %>% 
+                         )                                                                      %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                      %>%
+                  filter(.index>=as.Date("2017-01-01"))                                         %>% 
                   mutate(dif_pht  = ACTUAL - PROPHET ,
                          dif_ar   = ACTUAL - ARIMA ,
                          dif_arxg   = ACTUAL - ARIMAXG ,
@@ -335,9 +338,9 @@ db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero                %>%
 
 
 
-
-#3)
-
+####  
+# 3
+####
   fitted_vx_mcero<-readRDS("fit_preintervention/fitted_values_vx_mcero2024v11_3.rds")  %>% 
                   select(.model_desc,date,.prediction,id)                              %>% 
                   rename(.value = .prediction,
@@ -345,8 +348,9 @@ db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero                %>%
                   mutate(.key   = "fitted")
   
   
-############  
+####  
 # 4
+####  
  db_vx_mcero.train<-  db_vx_mcero                                                              %>% 
                      rbind(fitted_vx_mcero)                                                    %>% 
                      mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
@@ -369,8 +373,9 @@ db.error.tbl_vx_mcero.train   <- db.error_vx_mcero.train                        
 
 
 
-
-### 5 
+####  
+# 5
+####
 
 db.prov.error_vx_mcero.train <- db_vx_mcero.train                          %>% 
                                group_by(.index,id,.model_desc)             %>% 
@@ -413,7 +418,6 @@ db.full.prov.error.tbl_vx_mcero.train <- db.prov.error.tbl_vx_mcero.train     %>
 
 library(tidyverse)
 
-load("Peru.rda")
 peru_prov_shp  <- Peru                  %>% 
                   filter(dep=="LORETO") %>% 
                   group_by(prov)        %>% 
@@ -434,7 +438,11 @@ db.error.tbl_flpm_mcero   <-  db.error_flpm_mcero                               
                   pivot_wider(names_from=.model_desc,values_from = valor )                   %>%
                   filter(.index>=as.Date("2017-01-01"))
 
-##2
+
+####  
+# 2
+####
+
 db.prov.error_flpm_mcero <-  db_flpm_mcero                              %>% 
                              group_by(.index,id,.model_desc)            %>% 
                              summarise(valor=sum(.value))
@@ -464,7 +472,9 @@ db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero           %>%
 
 
 
-#3)
+####  
+# 3
+####
 
   fitted_flpm_mcero<-readRDS("fit_preintervention/fitted_values_flpm_mcero2024v11_3.rds")    %>% 
                   select(.model_desc,date,.prediction,id) %>% 
@@ -473,8 +483,10 @@ db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero           %>%
                   mutate(.key   = "fitted")
   
   
-################  
+####  
 # 4
+####  
+  
  db_flpm_mcero.train<-db_flpm_mcero                                                              %>%
                      rbind(fitted_flpm_mcero)                                                    %>% 
                      mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
@@ -500,8 +512,9 @@ db.error.tbl_flpm_mcero.train   <- db.error_flpm_mcero.train                    
 
 
 
-
-### 5 
+####  
+# 5
+####
 
 db.prov.error_flpm_mcero.train <- db_flpm_mcero.train                            %>% 
                                group_by(.index,id,.model_desc)                   %>% 
@@ -567,8 +580,8 @@ MDAE                =c(Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_
 
 MAE                = c( Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
                         Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
-                       Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
-                       Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                        Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                        Metrics::mae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
                       ),
 
 MASE                = c( Metrics::mase(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
