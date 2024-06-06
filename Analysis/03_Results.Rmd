@@ -31,14 +31,14 @@ library(sf)
 
 
 
-Peru           <- readRDS("peru.rds")
+Peru           <- readRDS("./Data/peru.rds")
 peru_prov_shp  <- Peru %>% 
                   filter(dep=="LORETO") %>% 
                   group_by(prov) %>% 
                   summarise()
 
 
-db_vx_pfro                <-  readRDS("forecast_intervention/db_frcst_bestmodels_vx_pfro.rds")
+db_vx_pfro                <-  readRDS("Analysis/forecast_intervention/db_frcst_bestmodels_vx_pfro.rds")
 db.error_vx_pfro          <-  db_vx_pfro                                            %>% 
                               group_by(.index,.model_desc)                          %>% 
                               summarise(valor=sum(.value))    
@@ -47,31 +47,31 @@ db.error.tbl_vx_pfro   <- db.error_vx_pfro                                      
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"))          %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                  %>%
                   filter(.index>=as.Date("2006-01-01"))   
 
 ##2
-db.prov.error_vx_pfro <- db_vx_pfro                          %>% 
+db.prov.error_vx_pfro <- db_vx_pfro                             %>% 
                          group_by(.index,id,.model_desc)        %>% 
                          summarise(valor=sum(.value))
 
 
-db.prov.error.tbl_vx_pfro <- db.prov.error_vx_pfro                             %>% 
+db.prov.error.tbl_vx_pfro <- db.prov.error_vx_pfro                                          %>% 
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index>=as.Date("2006-01-01"))    %>% 
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"))          %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                  %>%
+                  filter(.index>=as.Date("2006-01-01"))                                     %>% 
                   mutate(dif_pht  = ACTUAL - PROPHET ,
                          dif_ar   = ACTUAL - ARIMA ,
                          dif_nnar = ACTUAL - NNAR,
                          dif_arxg = ACTUAL - ARIMAXG
                          )
 
-db.full.prov.error.tbl_vx_pfro <- db.prov.error.tbl_vx_pfro %>%
-                              group_by(id) %>% 
+db.full.prov.error.tbl_vx_pfro <- db.prov.error.tbl_vx_pfro                                 %>%
+                              group_by(id)                                                  %>% 
                               summarise(dif_ar  = sum(dif_ar),
                                         dif_arxg  = sum(dif_arxg),
                                         dif_pht = sum(dif_pht),
@@ -82,17 +82,15 @@ db.full.prov.error.tbl_vx_pfro <- db.prov.error.tbl_vx_pfro %>%
 
 #3)
 
-  fitted_vx_pfro<-readRDS("fit_preintervention/fitted_values_vx_pfro.rds")    %>% 
-                  select(.model_desc,date,.prediction,id) %>% 
+fitted_vx_pfro <- readRDS("Analysis/fit_preintervention/fitted_values_vx_pfro.rds")    %>% 
+                  select(.model_desc,date,.prediction,id)                              %>% 
                   rename(.value = .prediction,
-                         .index =  date) %>% 
+                         .index =  date)                                               %>% 
                   mutate(.key   = "fitted")
 
 
-  
-  # 4 ) trains
-  
- db_vx_pfro.train<-  db_vx_pfro                                                               %>% # prediccion + actual
+# 4 ) trains
+db_vx_pfro.train <-  db_vx_pfro                                                               %>% # prediccion + actual
                      rbind(fitted_vx_pfro)                                                    %>% # fitted values
                      mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                             .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
@@ -125,18 +123,18 @@ db.prov.error.tbl_vx_pfro.train <- db.prov.error_vx_pfro.train                  
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index<as.Date("2006-01-01"))    %>% 
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"))         %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                 %>%
+                  filter(.index<as.Date("2006-01-01"))                                     %>% 
                   mutate(dif_pht  = ACTUAL - PROPHET ,
                          dif_ar   = ACTUAL - ARIMA ,
                          dif_nnar = ACTUAL - NNAR,
                          dif_arxg = ACTUAL - ARIMAXG
                          )
 
-db.full.prov.error.tbl_vx_pfro.train <- db.prov.error.tbl_vx_pfro.train %>%
-                              ungroup() %>% 
-                              group_by(id) %>% 
+db.full.prov.error.tbl_vx_pfro.train <- db.prov.error.tbl_vx_pfro.train         %>%
+                              ungroup()                                         %>% 
+                              group_by(id)                                      %>% 
                               summarise(dif_ar  = sum(dif_ar),
                                         dif_arxg  = sum(dif_arxg),
                                         dif_pht = sum(dif_pht),
@@ -154,30 +152,30 @@ db.full.prov.error.tbl_vx_pfro.train <- db.prov.error.tbl_vx_pfro.train %>%
 
 library(tidyverse)
 
-load("Peru.rda")
-peru_prov_shp  <- Peru %>% 
-                  filter(dep=="LORETO") %>% 
-                  group_by(prov) %>% 
+Peru           <- readRDS("./Data/peru.rds")
+peru_prov_shp  <- Peru                   %>% 
+                  filter(dep=="LORETO")  %>% 
+                  group_by(prov)         %>%  
                   summarise()
 
 
-db_flpm_pfro             <-  readRDS("forecast_intervention/db_frcst_bestmodels_flcpm_pfro.rds")
-db.error_flpm_pfro       <-   db_flpm_pfro                                              %>% 
-                              group_by(.index,.model_desc)                         %>% 
+db_flpm_pfro             <-  readRDS("Analysis/forecast_intervention/db_frcst_bestmodels_flcpm_pfro.rds")
+db.error_flpm_pfro       <-   db_flpm_pfro                                                               %>% 
+                              group_by(.index,.model_desc)                                               %>% 
                               summarise(valor=sum(.value))    
 
-db.error.tbl_flpm_pfro   <-  db.error_flpm_pfro                                       %>% 
-                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
-                         .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
-                         .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-                         ) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+db.error.tbl_flpm_pfro   <-   db.error_flpm_pfro                                                          %>% 
+                              mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                                     .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                                     .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                                     .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                                     )                                                                    %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                                %>%
                   filter(.index>=as.Date("2006-01-01"))   
 
 ##2
-db.prov.error_flpm_pfro <-  db_flpm_pfro                              %>% 
-                           group_by(.index,id,.model_desc)      %>% 
+db.prov.error_flpm_pfro <-  db_flpm_pfro                                        %>%  
+                           group_by(.index,id,.model_desc)                      %>% 
                            summarise(valor=sum(.value))
 
 
@@ -186,18 +184,17 @@ db.prov.error.tbl_flpm_pfro <- db.prov.error_flpm_pfro                          
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
                          .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-                         
-                         ) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index>=as.Date("2006-01-01"))    %>% 
+                         )                                                       %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )       %>%
+                  filter(.index>=as.Date("2006-01-01"))                          %>% 
                           mutate(dif_pht  = ACTUAL - PROPHET ,
                                  dif_ar   = ACTUAL - ARIMA ,
                                  dif_arxg   = ACTUAL - ARIMAXG ,
                                  dif_nnar = ACTUAL - NNAR
                                  )
 
-db.full.prov.error.tbl_flpm_pfro <-  db.prov.error.tbl_flpm_pfro %>%
-                                group_by(id) %>% 
+db.full.prov.error.tbl_flpm_pfro <-  db.prov.error.tbl_flpm_pfro                 %>%
+                                group_by(id)                                     %>% 
                                 summarise(dif_ar  = sum(dif_ar),
                                           dif_arxg  = sum(dif_arxg),
                                           dif_pht = sum(dif_pht),
@@ -207,18 +204,18 @@ db.full.prov.error.tbl_flpm_pfro <-  db.prov.error.tbl_flpm_pfro %>%
 
 #3)
 
-  fitted_flpm_pfro<-readRDS("fit_preintervention/fitted_values_flpm_pfro2024v11_3.rds")    %>% 
-                  select(.model_desc,date,.prediction,id) %>% 
+  fitted_flpm_pfro<-readRDS("Analysis/fit_preintervention/fitted_values_flpm_pfro.rds")          %>% 
+                  select(.model_desc,date,.prediction,id)                                        %>% 
                   rename(.value = .prediction,
-                         .index =  date) %>% 
+                         .index =  date)                                                         %>% 
                   mutate(.key   = "fitted")
 
   
   
 ###############  
 # 4
- db_flpm_pfro.train<-  db_flpm_pfro                                                               %>% # prediccion + actual
-                     rbind(fitted_flpm_pfro)                                                    %>% # fitted values
+ db_flpm_pfro.train<-  db_flpm_pfro                                                             %>% 
+                     rbind(fitted_flpm_pfro)                                                    %>% 
                      mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                             .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                             .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
@@ -228,14 +225,14 @@ db.full.prov.error.tbl_flpm_pfro <-  db.prov.error.tbl_flpm_pfro %>%
                             )
  
  
-db.error_flpm_pfro.train       <-     db_flpm_pfro.train                                       %>% 
-                                    group_by(.index,.model_desc)                           %>% 
-                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+db.error_flpm_pfro.train       <-     db_flpm_pfro.train                                         %>% 
+                                      group_by(.index,.model_desc)                               %>% 
+                                      summarise(valor=sum(.value,na.rm = TRUE)) 
 
 
 db.error.tbl_flpm_pfro.train   <- db.error_flpm_pfro.train                                      %>% 
-                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                                filter(.index<as.Date("2006-01-01"))  
+                                  pivot_wider(names_from=.model_desc,values_from = valor )      %>%
+                                  filter(.index<as.Date("2006-01-01"))  
 
 
 
@@ -243,26 +240,26 @@ db.error.tbl_flpm_pfro.train   <- db.error_flpm_pfro.train                      
 ### 5 
 
 db.prov.error_flpm_pfro.train <- db_flpm_pfro.train                          %>% 
-                               group_by(.index,id,.model_desc)             %>% 
-                               summarise(valor=sum(.value))
+                                 group_by(.index,id,.model_desc)             %>% 
+                                 summarise(valor=sum(.value))
 
 
-db.prov.error.tbl_flpm_pfro.train <- db.prov.error_flpm_pfro.train                             %>% 
+db.prov.error.tbl_flpm_pfro.train <- db.prov.error_flpm_pfro.train                           %>% 
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index<as.Date("2006-01-01"))    %>% 
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"))           %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                   %>%
+                  filter(.index<as.Date("2006-01-01"))                                       %>% 
                   mutate(dif_pht  = ACTUAL - PROPHET ,
                          dif_ar   = ACTUAL - ARIMA ,
                          dif_nnar = ACTUAL - NNAR,
                          dif_arxg = ACTUAL - ARIMAXG
                          )
 
-db.full.prov.error.tbl_flpm_pfro.train <- db.prov.error.tbl_flpm_pfro.train %>%
-                              ungroup() %>% 
-                              group_by(id) %>% 
+db.full.prov.error.tbl_flpm_pfro.train <- db.prov.error.tbl_flpm_pfro.train      %>%
+                              ungroup()                                          %>% 
+                              group_by(id)                                       %>% 
                               summarise(dif_ar  = sum(dif_ar),
                                         dif_arxg  = sum(dif_arxg),
                                         dif_pht = sum(dif_pht),
@@ -290,14 +287,14 @@ library(sf)
 Peru           <- readRDS("peru.rds")
 peru_prov_shp  <- Peru %>% 
                   filter(dep=="LORETO") %>% 
-                  group_by(prov) %>% 
+                  group_by(prov)        %>% 
                   summarise()
 
 
-db_vx_mcero             <-  readRDS("forecast_intervention/db_frcst_bestmodels_vx_mcero.rds")
-db.error_vx_mcero          <- db_vx_mcero                                               %>% 
-                      group_by(.index,.model_desc)                          %>% 
-                      summarise(valor=sum(.value))    
+db_vx_mcero                <-  readRDS("forecast_intervention/db_frcst_bestmodels_vx_mcero.rds")
+db.error_vx_mcero          <-  db_vx_mcero                                                      %>% 
+                               group_by(.index,.model_desc)                                     %>% 
+                               summarise(valor=sum(.value))    
 
 db.error.tbl_vx_mcero   <- db.error_vx_mcero                                 %>% 
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
@@ -308,8 +305,8 @@ db.error.tbl_vx_mcero   <- db.error_vx_mcero                                 %>%
                   pivot_wider(names_from=.model_desc,values_from = valor )    %>%
                   filter(.index>=as.Date("2017-01-01"))   
 ##2
-db.prov.error_vx_mcero <- db_vx_mcero                              %>% 
-                         group_by(.index,id,.model_desc) %>% 
+db.prov.error_vx_mcero <- db_vx_mcero                                        %>% 
+                         group_by(.index,id,.model_desc)                     %>% 
                          summarise(valor=sum(.value))
 
 
@@ -327,8 +324,8 @@ db.prov.error.tbl_vx_mcero <- db.prov.error_vx_mcero                            
                          dif_nnar = ACTUAL - NNAR
                          )
 
-db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero %>%
-                              group_by(id) %>% 
+db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero                %>%
+                              group_by(id)                                   %>% 
                               summarise(dif_ar  = sum(dif_ar),
                                         dif_arxg  = sum(dif_arxg),
                                         dif_pht = sum(dif_pht),
@@ -341,17 +338,17 @@ db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero %>%
 
 #3)
 
-  fitted_vx_mcero<-readRDS("fit_preintervention/fitted_values_vx_mcero2024v11_3.rds")    %>% 
-                  select(.model_desc,date,.prediction,id) %>% 
+  fitted_vx_mcero<-readRDS("fit_preintervention/fitted_values_vx_mcero2024v11_3.rds")  %>% 
+                  select(.model_desc,date,.prediction,id)                              %>% 
                   rename(.value = .prediction,
-                         .index =  date) %>% 
+                         .index =  date)                                               %>% 
                   mutate(.key   = "fitted")
   
   
 ############  
 # 4
- db_vx_mcero.train<-  db_vx_mcero                                                               %>% # prediccion + actual
-                     rbind(fitted_vx_mcero)                                                    %>% # fitted values
+ db_vx_mcero.train<-  db_vx_mcero                                                              %>% 
+                     rbind(fitted_vx_mcero)                                                    %>% 
                      mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                             .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                             .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
@@ -361,14 +358,14 @@ db.full.prov.error.tbl_vx_mcero <- db.prov.error.tbl_vx_mcero %>%
                             )
  
  
-db.error_vx_mcero.train       <-     db_vx_mcero.train                                       %>% 
-                                    group_by(.index,.model_desc)                           %>% 
-                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+db.error_vx_mcero.train       <-     db_vx_mcero.train                                        %>% 
+                                     group_by(.index,.model_desc)                             %>% 
+                                     summarise(valor=sum(.value,na.rm = TRUE)) 
 
 
-db.error.tbl_vx_mcero.train   <- db.error_vx_mcero.train                                      %>% 
-                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                                filter(.index<as.Date("2017-01-01"))  
+db.error.tbl_vx_mcero.train   <- db.error_vx_mcero.train                                       %>% 
+                                 pivot_wider(names_from=.model_desc,values_from = valor )      %>%
+                                 filter(.index<as.Date("2017-01-01"))  
 
 
 
@@ -380,22 +377,22 @@ db.prov.error_vx_mcero.train <- db_vx_mcero.train                          %>%
                                summarise(valor=sum(.value))
 
 
-db.prov.error.tbl_vx_mcero.train <- db.prov.error_vx_mcero.train                             %>% 
+db.prov.error.tbl_vx_mcero.train <- db.prov.error_vx_mcero.train                           %>% 
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index<as.Date("2017-01-01"))    %>% 
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"))         %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                 %>%
+                  filter(.index<as.Date("2017-01-01"))                                     %>% 
                   mutate(dif_pht  = ACTUAL - PROPHET ,
                          dif_ar   = ACTUAL - ARIMA ,
                          dif_nnar = ACTUAL - NNAR,
                          dif_arxg = ACTUAL - ARIMAXG
                          )
 
-db.full.prov.error.tbl_vx_mcero.train <- db.prov.error.tbl_vx_mcero.train %>%
-                              ungroup() %>% 
-                              group_by(id) %>% 
+db.full.prov.error.tbl_vx_mcero.train <- db.prov.error.tbl_vx_mcero.train     %>%
+                              ungroup()                                       %>% 
+                              group_by(id)                                    %>% 
                               summarise(dif_ar  = sum(dif_ar),
                                         dif_arxg  = sum(dif_arxg),
                                         dif_pht = sum(dif_pht),
@@ -417,15 +414,15 @@ db.full.prov.error.tbl_vx_mcero.train <- db.prov.error.tbl_vx_mcero.train %>%
 library(tidyverse)
 
 load("Peru.rda")
-peru_prov_shp  <- Peru %>% 
+peru_prov_shp  <- Peru                  %>% 
                   filter(dep=="LORETO") %>% 
-                  group_by(prov) %>% 
+                  group_by(prov)        %>% 
                   summarise()
 
 
-db_flpm_mcero             <-  readRDS("forecast_intervention/db_frcst_bestmodels_flcpm_mcero.rds")
+db_flpm_mcero             <-  readRDS("Analysis/forecast_intervention/db_frcst_bestmodels_flcpm_mcero.rds")
 db.error_flpm_mcero       <-  db_flpm_mcero                                              %>% 
-                              group_by(.index,.model_desc)                         %>% 
+                              group_by(.index,.model_desc)                               %>% 
                               summarise(valor=sum(.value))    
 
 db.error.tbl_flpm_mcero   <-  db.error_flpm_mcero                                            %>% 
@@ -433,13 +430,13 @@ db.error.tbl_flpm_mcero   <-  db.error_flpm_mcero                               
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
                          .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-                         ) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
+                         )                                                                   %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                   %>%
                   filter(.index>=as.Date("2017-01-01"))
 
 ##2
 db.prov.error_flpm_mcero <-  db_flpm_mcero                              %>% 
-                             group_by(.index,id,.model_desc)      %>% 
+                             group_by(.index,id,.model_desc)            %>% 
                              summarise(valor=sum(.value))
 
 
@@ -450,15 +447,15 @@ db.prov.error.tbl_flpm_mcero <- db.prov.error_flpm_mcero                        
                          .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
                          ) %>% 
                   pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index>=as.Date("2017-01-01")) %>% 
+                  filter(.index>=as.Date("2017-01-01"))                       %>% 
                           mutate(dif_pht  = ACTUAL - PROPHET ,
                                  dif_ar   = ACTUAL - ARIMA ,
                                  dif_arxg   = ACTUAL - ARIMAXG ,
                                  dif_nnar = ACTUAL - NNAR
                                  )
 
-db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero %>%
-                                        group_by(id) %>% 
+db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero           %>%
+                                        group_by(id)                         %>% 
                                         summarise(dif_ar  = sum(dif_ar),
                                                   dif_arxg  = sum(dif_arxg),
                                                   dif_pht = sum(dif_pht),
@@ -478,8 +475,8 @@ db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero %>%
   
 ################  
 # 4
- db_flpm_mcero.train<-db_flpm_mcero                                                               %>% # prediccion + actual
-                     rbind(fitted_flpm_mcero)                                                    %>% # fitted values
+ db_flpm_mcero.train<-db_flpm_mcero                                                              %>%
+                     rbind(fitted_flpm_mcero)                                                    %>% 
                      mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                             .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                             .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
@@ -490,13 +487,13 @@ db.full.prov.error.tbl_flpm_mcero <-  db.prov.error.tbl_flpm_mcero %>%
  
  
 db.error_flpm_mcero.train       <-     db_flpm_mcero.train                                       %>% 
-                                    group_by(.index,.model_desc)                           %>% 
-                                    summarise(valor=sum(.value,na.rm = TRUE)) 
+                                       group_by(.index,.model_desc)                              %>% 
+                                       summarise(valor=sum(.value,na.rm = TRUE)) 
 
 
-db.error.tbl_flpm_mcero.train   <- db.error_flpm_mcero.train                                      %>% 
-                                pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                                filter(.index<as.Date("2017-01-01"))
+db.error.tbl_flpm_mcero.train   <- db.error_flpm_mcero.train                                     %>% 
+                                   pivot_wider(names_from=.model_desc,values_from = valor )      %>%
+                                   filter(.index<as.Date("2017-01-01"))
         
 
 
@@ -506,27 +503,27 @@ db.error.tbl_flpm_mcero.train   <- db.error_flpm_mcero.train                    
 
 ### 5 
 
-db.prov.error_flpm_mcero.train <- db_flpm_mcero.train                          %>% 
-                               group_by(.index,id,.model_desc)             %>% 
+db.prov.error_flpm_mcero.train <- db_flpm_mcero.train                            %>% 
+                               group_by(.index,id,.model_desc)                   %>% 
                                summarise(valor=sum(.value))
 
 
-db.prov.error.tbl_flpm_mcero.train <- db.prov.error_flpm_mcero.train                             %>% 
+db.prov.error.tbl_flpm_mcero.train <- db.prov.error_flpm_mcero.train                        %>% 
                   mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")) %>% 
-                  pivot_wider(names_from=.model_desc,values_from = valor )    %>%
-                  filter(.index<as.Date("2017-01-01"))    %>% 
+                         .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA"))          %>% 
+                  pivot_wider(names_from=.model_desc,values_from = valor )                  %>%
+                  filter(.index<as.Date("2017-01-01"))                                      %>% 
                   mutate(dif_pht  = ACTUAL - PROPHET ,
                          dif_ar   = ACTUAL - ARIMA ,
                          dif_nnar = ACTUAL - NNAR,
                          dif_arxg = ACTUAL - ARIMAXG
                          )
 
-db.full.prov.error.tbl_flpm_mcero.train <- db.prov.error.tbl_flpm_mcero.train %>%
-                              ungroup() %>% 
-                              group_by(id) %>% 
+db.full.prov.error.tbl_flpm_mcero.train <- db.prov.error.tbl_flpm_mcero.train    %>%
+                              ungroup()                                          %>% 
+                              group_by(id)                                       %>% 
                               summarise(dif_ar  = sum(dif_ar),
                                         dif_arxg  = sum(dif_arxg),
                                         dif_pht = sum(dif_pht),
@@ -558,7 +555,8 @@ library(yardstick)
 
 
 data.error.falciparum.pfro <-data.frame(Especie         =c("Falciparum"),
-                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+                                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST",
+                                                           "NNETAR"),
 MDAE                =c(Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
                        Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
                        Metrics::mdae(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
@@ -582,15 +580,15 @@ MASE                = c( Metrics::mase(db.error.tbl_flpm_pfro$ACTUAL,db.error.tb
 
 
 MAPE                = c( Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
-                        Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
-                       Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
-                       Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                         Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                         Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                         Metrics::mape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
                       ),
 
 SMAPE                = c( Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
-                        Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
-                       Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
-                       Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
+                          Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMAXG),
+                          Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$PROPHET),
+                          Metrics::smape(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$NNAR)
                       ),
 
 RMSE                = c( Metrics::rmse(db.error.tbl_flpm_pfro$ACTUAL,db.error.tbl_flpm_pfro$ARIMA),
@@ -616,8 +614,8 @@ MDAE                =c(Metrics::mdae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx
 
 MAE                = c( Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
                         Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
-                       Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
-                       Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                        Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                        Metrics::mae(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
                       ),
 
 
@@ -630,22 +628,22 @@ MASE                = c( Metrics::mase(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_
 
 
 MAPE                = c( Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
-                        Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
-                       Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
-                       Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                         Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                         Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                         Metrics::mape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
                       ),
 
 
 SMAPE                = c( Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
-                        Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
-                       Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
-                       Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                          Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
+                          Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                          Metrics::smape(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
                       ),
 
 RMSE                = c( Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMA),
                          Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$ARIMAXG),
-                       Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
-                       Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
+                         Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$PROPHET),
+                         Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_vx_pfro$NNAR)
                        )
 
                        )
@@ -655,7 +653,8 @@ RMSE                = c( Metrics::rmse(db.error.tbl_vx_pfro$ACTUAL,db.error.tbl_
 
 
 data.error.falciparum.mcero <-data.frame(Especie         =c("Falciparum"),
-                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+                                         Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST",
+                                                            "NNETAR"),
 MDAE                =c(Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
                        Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
                        Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
@@ -665,8 +664,8 @@ MDAE                =c(Metrics::mdae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl
 
 MAE                = c( Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
                         Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
-                       Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
-                       Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                        Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                        Metrics::mae(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
                       ),
 
 MASE                = c( Metrics::mase(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
@@ -679,22 +678,22 @@ MASE                = c( Metrics::mase(db.error.tbl_flpm_mcero$ACTUAL,db.error.t
 
 
 MAPE                = c( Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
-                        Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
-                       Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
-                       Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                         Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                         Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                         Metrics::mape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
                       ),
 
 
 SMAPE                = c( Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
-                        Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
-                       Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
-                       Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                          Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
+                          Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                          Metrics::smape(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
                       ),
 
 RMSE                = c( Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMA),
                          Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$ARIMAXG),
-                       Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
-                       Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
+                         Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$PROPHET),
+                         Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.tbl_flpm_mcero$NNAR)
                        )
 
                        )
@@ -702,7 +701,8 @@ RMSE                = c( Metrics::rmse(db.error.tbl_flpm_mcero$ACTUAL,db.error.t
 
 
 data.error.vivax.mcero <-data.frame(Especie         =c("Vivax"),
-                        Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST","NNETAR"),
+                                    Model           =c("ARIMA","ARIMA-XGBOOST","PROPHET-XGBOOST",
+                                                       "NNETAR"),
 MDAE                =c(Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
                        Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
                        Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
@@ -712,8 +712,8 @@ MDAE                =c(Metrics::mdae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_v
 
 MAE                = c( Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
                         Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
-                       Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
-                       Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                        Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                        Metrics::mae(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
                       ),
 
 MASE                = c( Metrics::mase(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
@@ -726,9 +726,9 @@ MASE                = c( Metrics::mase(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl
 
 
 MAPE                = c( Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
-                        Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
-                       Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
-                       Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
+                         Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMAXG),
+                         Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$PROPHET),
+                         Metrics::mape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$NNAR)
                       ),
 
 SMAPE                = c( Metrics::smape(db.error.tbl_vx_mcero$ACTUAL,db.error.tbl_vx_mcero$ARIMA),
@@ -763,9 +763,9 @@ library(gt)
 
  
  data.error.vivax.pfro                 %>%
-          select(-Especie)           %>% 
-          gt::gt()                   %>%
-          tab_spanner(
+ select(-Especie)                      %>% 
+ gt::gt()                              %>%
+ tab_spanner(
             label = "Vivax",
             columns = c(2,3,4)
           )
@@ -2246,12 +2246,12 @@ theme(                panel.border = element_blank(),
 
 ```{r,message=F,warning=F,fig.height=8}
 
-tbl.error.vx.box <- rbind(db.prov.error.tbl_vx_pfro %>% mutate(intervention="PAMAFRO"),
-                      db.prov.error.tbl_vx_mcero%>% mutate(intervention="MALARIA CERO")) %>% 
+tbl.error.vx.box <- rbind(db.prov.error.tbl_vx_pfro  %>% mutate(intervention="PAMAFRO"),
+                          db.prov.error.tbl_vx_mcero %>% mutate(intervention="MALARIA CERO"))     %>% 
                     mutate(intervention = ifelse(intervention =="MALARIA CERO","PMC","PAMAFRO"))
 
-tbl.error.flpm.box <- rbind(db.prov.error.tbl_flpm_pfro %>% mutate(intervention="PAMAFRO"),
-                      db.prov.error.tbl_flpm_mcero %>% mutate(intervention="MALARIA CERO"))%>% 
+tbl.error.flpm.box <- rbind(db.prov.error.tbl_flpm_pfro  %>% mutate(intervention="PAMAFRO"),
+                            db.prov.error.tbl_flpm_mcero %>% mutate(intervention="MALARIA CERO")) %>% 
                     mutate(intervention = ifelse(intervention =="MALARIA CERO","PMC","PAMAFRO"))
 
 
@@ -2262,19 +2262,18 @@ library(ggthemes)
 (plot.v   <-ggplot(tbl.error.vx.box, 
                   aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
                       y    =  dif_pht,
-                      #fill =  intervention,
                       col  =  intervention ))                                   +
            geom_boxplot(outlier.shape = NA)                                     +
            geom_point(aes(color    = intervention),
                           width=0.15, alpha=.60,
                           position = position_jitterdodge())                    +
-    scale_fill_manual( values=c("#DC0000B2","gold"))                          +
-    scale_color_manual(values=c("#DC0000B2","gold"))                          + 
+    scale_fill_manual( values=c("#DC0000B2","gold"))                            +
+    scale_color_manual(values=c("#DC0000B2","gold"))                            + 
     xlab(" ")                                                                   +
     ylab("Cases variation (O-E)")                                               +
     theme_stata(scheme = "s1mono")+
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-                plot.title = element_text(size = 15, face = "bold",hjust = 0))+  
+                plot.title = element_text(size = 15, face = "bold",hjust = 0))  +  
     labs(title="A) P. Vivax")
 )
 
@@ -2288,14 +2287,13 @@ library(ggthemes)
 (plot.f   <-ggplot(tbl.error.flpm.box, 
                   aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
                       y    =  dif_pht,
-                      #fill =  intervention,
                       col  =  intervention ))                                   +
            geom_boxplot(outlier.shape = NA)                                     +
            geom_point(aes(color    = intervention),
                           width=0.15, alpha=.60,
                           position = position_jitterdodge())                    +
-    scale_fill_manual( values=c("#DC0000B2","gold"))                          +
-    scale_color_manual(values=c("#DC0000B2","gold"))                          + 
+    scale_fill_manual( values=c("#DC0000B2","gold"))                            +
+    scale_color_manual(values=c("#DC0000B2","gold"))                            + 
     xlab(" ")                                                                   +
     ylab("Cases variation (O-E)")                                               +
     theme_stata(scheme = "s1mono")+
@@ -2312,8 +2310,11 @@ library(ggthemes)
 
 
 ```{r,message=F,warning=F,fig.height=8}
+
+
+
 tbl.error.pfro.box <- rbind(db.prov.error.tbl_vx_pfro %>% mutate(Specie="P.Vivax"),
-                          db.prov.error.tbl_flpm_pfro %>% mutate(Specie="P.falciparum"))
+                            db.prov.error.tbl_flpm_pfro %>% mutate(Specie="P.falciparum"))
 
 
 
@@ -2326,20 +2327,19 @@ library(ggthemes)
 (plot.v   <-ggplot(tbl.error.pfro.box, 
                   aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
                       y    =  dif_pht,
-                      #fill =  intervention,
-                      col  =  Specie ))                                   +
+                      col  =  Specie ))                                         +
            geom_boxplot(outlier.shape = NA)                                     +
            geom_point(aes(color    = Specie),
                           width=0.15, alpha=.60,
                           position = position_jitterdodge())                    +
-    scale_fill_manual( values=c("#DC0000B2","darkred"))                          +
-    scale_color_manual(values=c("#DC0000B2","darkred"))                          + 
+    scale_fill_manual( values=c("#DC0000B2","darkred"))                         +
+    scale_color_manual(values=c("#DC0000B2","darkred"))                         + 
     xlab(" ")                                                                   +
     ylab("Cases variation (O-E)")                                               +
-    theme_stata(scheme = "s1mono")+
+    theme_stata(scheme = "s1mono")                                              +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
                 plot.title = element_text(size = 15, face = "bold",hjust = 0),
-          legend.position = "bottom")+  
+          legend.position = "bottom")                                           +   
     labs(title="A) PAMAFRO")
 )
 
@@ -2353,8 +2353,8 @@ library(ggthemes)
 
 ```{r,message=F,warning=F,fig.height=8}
 
-tbl.error.flpm.box <- rbind(db.prov.error.tbl_vx_mcero %>% mutate(Specie="MALARIA CERO"),
-                      db.prov.error.tbl_flpm_mcero %>% mutate(Specie="MALARIA CERO"))
+tbl.error.flpm.box <- rbind(db.prov.error.tbl_vx_mcero   %>% mutate(Specie="MALARIA CERO"),
+                            db.prov.error.tbl_flpm_mcero %>% mutate(Specie="MALARIA CERO"))
 
 
 library(viridis)
@@ -2364,14 +2364,13 @@ library(ggthemes)
 (plot.v   <-ggplot(tbl.error.pfro.box, 
                   aes(x    =  reorder(id,dif_pht, na.rm = TRUE), 
                       y    =  dif_pht,
-                      #fill =  intervention,
-                      col  =  Specie ))                                   +
+                      col  =  Specie ))                                         +
            geom_boxplot(outlier.shape = NA)                                     +
            geom_point(aes(color    = Specie),
                           width=0.15, alpha=.60,
                           position = position_jitterdodge())                    +
-    scale_fill_manual( values=c("yellow","gold3"))                          +
-    scale_color_manual(values=c("yellow","gold3"))                          + 
+    scale_fill_manual( values=c("yellow","gold3"))                              +
+    scale_color_manual(values=c("yellow","gold3"))                              + 
     xlab(" ")                                                                   +
     ylab("Cases variation (O-E)")                                               +
     theme_stata(scheme = "s1mono")+
