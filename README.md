@@ -33,7 +33,11 @@ This study proposes that malaria interventions were effective in reducing malari
    R markdowns and outputs. 
   <ul>
     <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/02_Calculate_ML.Rmd">02_Calculate_ML </a></li>  
-    ######  `R` markdown for data preparation,preprocessing and model building.
+  </ul>
+  
+    ###### `R` markdown for data preparation,preprocessing and model building.
+    
+  <ul>
     <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Analysis/03_Results.Rmd">03_Results  </a></li> `R` markdown to present the results of the data analysis.
     <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/fit_preintervention"> fit_preintervention </a></li> Fitted values in comparison to training dataset
     <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/tree/main/Analysis/forecast_intervention"> forecast_intervention </a></li> Forecasted values in comparison to test dataset
