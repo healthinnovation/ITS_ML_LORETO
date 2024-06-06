@@ -1914,9 +1914,9 @@ scale_fill_gradient2(low = "brown",
                      midpoint = 0,
                                "Variacion\nde casos\n(O-E)",
                      breaks = c(-40000,-30000,-20000,-10000,0))                 +
-  labs(title = "A) P. Vivax")                                                   + 
+labs(title = "A) P. Vivax")                                                   + 
 theme_bw()                                                                      +
-  theme(plot.title = element_text(hjust = 0, face = "bold"))
+theme(plot.title = element_text(hjust = 0, face = "bold"))
 
 
 
