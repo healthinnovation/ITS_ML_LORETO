@@ -52,10 +52,13 @@ This study proposes that malaria interventions were effective in reducing malari
 
 <details> 
   <summary> Others </summary>
+  
 - .gitignore
 - .Rprofile
 - README.md
 - [ITS_ML.Rproj](ITS_ML.Rproj) `R` project file.
+
+
 </details>
 
 ----------------
