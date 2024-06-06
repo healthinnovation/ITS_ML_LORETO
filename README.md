@@ -23,6 +23,18 @@ This study proposes that malaria interventions were effective in reducing malari
 
 ----------------
 
+<details>
+  <summary>analysis</summary>
+  <ul>
+    <li><a href="https://www.typescriptlang.org/">Typescript</a></li>
+    <li><a href="https://nextjs.org/">Next.js</a></li>
+    <li><a href="https://reactjs.org/">React.js</a></li>
+    <li><a href="https://tailwindcss.com/">TailwindCSS</a></li>
+  </ul>
+</details>
+
+
+
 
 ## `R` environment and version
 
