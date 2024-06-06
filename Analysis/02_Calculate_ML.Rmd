@@ -18,7 +18,7 @@ library(timetk)
 library(tidyverse)
 
 
-db.pamafro        <- readRDS("db_loreto_its.rds") %>% 
+db.pamafro        <- readRDS("Data/db_loreto_its.rds") %>% 
                      filter(year<=2010)           %>% 
                      mutate(date    = date_first,
                             id      = as.factor(prov),
