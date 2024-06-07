@@ -21,7 +21,7 @@
 --------------------------
 Study description
 ================
-This study proposes that malaria interventions  contributed in reducing malaria incidence during the period of their effectiveness, even when considering seasonal climate factors such as temperature and precipitation. We assessed  these two interventions using monthly malaria incidence data for Plasmodium vivax and P. falciparum in Loreto, Peru (2001–2019). Employing a two-stage ITS framework that incorporates  machine learning algorithms, we examined how both the **PMC** and **PAMAFRO** interventions contributed to reducing malaria incidence.
+This study proposes that malaria control programs contributed in reducing malaria incidence during the period of their effectiveness, even when considering seasonal climate factors such as temperature and precipitation. We assessed  these two interventions using monthly malaria incidence data for Plasmodium vivax and P. falciparum in Loreto, Peru (2001–2019). Employing a two-stage ITS framework that incorporates  machine learning algorithms, we examined how both the **PMC** and **PAMAFRO** interventions contributed to reducing malaria incidence.
 
 
 
