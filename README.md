@@ -7,7 +7,9 @@
 <img src="Figures/Fig2_PAMAFRO_species_map.jpg" alt="figure-2" width="500" height="700"/>
 </p>
 
-<i><b>Fig 2 : Choropleth map of absolute change between observed and counterfactual malaria incidence by specie in Post PAMAFRO  intervention period.</i>
+
+<p align="center">
+<i><b>Figure 2 </b>: Choropleth map of absolute change between observed and counterfactual malaria incidence by specie in Post PAMAFRO  intervention period.</i>
 </p>
 
 
