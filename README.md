@@ -38,7 +38,7 @@ Repository structure
   <summary>Data</summary>
   Data Employed to reproduce the results
   <ul>
-    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Data/db_loreto_its.rds">db_loreto_its.rds </a></li> 
+    <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Data/db_loreto_provMaynas_its.rds">db_loreto_provMaynas_its </a></li> 
     <li><a href="https://github.com/healthinnovation/ITS_ML_LORETO/blob/main/Data/peru.rds"> peru.rds  </a></li> 
   </ul>
 </details>
