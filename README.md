@@ -4,10 +4,10 @@
 
 
 <p align="center">
-<img src="Figures/Fig1_Time_Series_PAMAFRO.jpg" alt="figure-1" width="500" height="600"/>
+<img src="Figures/Fig2_PAMAFRO_species_map.jpg" alt="figure-2" width="500" height="600"/>
 </p>
 
-<i><b>Figure 1 : Evolution of actual and counterfactual malaria incidence by species in pre-and post-PAMAFRO intervention period.</i>
+<i><b>Fig 2 : Choropleth map of absolute change between observed and counterfactual malaria incidence by specie in Post PAMAFRO  intervention period.</i>
 </p>
 
 
