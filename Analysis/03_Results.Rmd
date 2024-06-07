@@ -1615,51 +1615,52 @@ loreto_grid <- data.frame(
 )
 
 
- db_vx_pfro                                                                     %>%
- rbind(fitted_vx_pfro)                                                          %>% 
- mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
-        .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
-        .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-        .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-        
-        
-        )                                                                       %>% 
- ungroup()                                                                      %>% 
-filter(.model_desc %in% c("ACTUAL",model.selected))                             %>% 
-ggplot()                                                                        +
-geom_line(aes(x=.index,y=.value,color=.model_desc))                             +
-geom_ribbon(aes( x   =  .index,
-                 ymin = .conf_lo,
-                 ymax = .conf_hi,
-                fill=  .model_desc),alpha=0.5)                                  +
-scale_fill_manual("Model",values = c("#231E23","firebrick4"))                   +   
-scale_color_manual("Model",values = c("#231E23","firebrick4"))                  +
-geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")                   +
-theme(  
-      axis.line = element_line(color = "black"),
-      axis.line.x = element_line(colour = "black"), 
-      axis.line.y = element_line(colour = "black"), 
-      panel.grid            = element_blank(),
-      panel.grid.major      = element_line(colour = "transparent"), 
-      panel.grid.minor      = element_line(colour = "transparent"), 
-      panel.background    = element_blank(),
-      legend.key            = element_rect(fill="transparent", colour=NA),
-      legend.key.size       = unit(1.2, "lines"), 
-      legend.key.height     = NULL, 
-      legend.key.width      = NULL,
-      strip.placement       = "inside", 
-      strip.placement.x     = NULL, 
-      strip.placement.y     = NULL, 
-      strip.switch.pad.grid = unit(0.1, "cm"), 
-      strip.switch.pad.wrap = unit(0.1, "cm"),
-      strip.background      = element_blank())                                         +
-  xlab(" ")                                                                            +
-  ylab("Incidence")                                                                    +
-  geom_vline(xintercept =as.Date("2006-01-01"), linetype = "dashed", alpha = 0.6)      +
-  annotate("text", x = as.Date("2008-04-01"), y = 6000, label = "Intervention", size=3)+
-              labs(title = "A) P. Vivax")                                              +
+(Vivax.ts.plot<- db_vx_pfro                                                                     %>%
+             rbind(fitted_vx_pfro)                                                          %>% 
+             mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                    .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                    .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                    .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                    
+                    
+                    )                                                                       %>% 
+             ungroup()                                                                      %>% 
+            filter(.model_desc %in% c("ACTUAL",model.selected))                             %>% 
+            ggplot()                                                                        +
+            geom_line(aes(x=.index,y=.value,color=.model_desc))                             +
+            geom_ribbon(aes( x   =  .index,
+                             ymin = .conf_lo,
+                             ymax = .conf_hi,
+                            fill=  .model_desc),alpha=0.5)                                  +
+            scale_fill_manual("Model",values = c("#231E23","firebrick4"))                   +   
+            scale_color_manual("Model",values = c("#231E23","firebrick4"))                  +
+            geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")                   +
+            theme(  
+                  axis.line = element_line(color = "black"),
+                  axis.line.x = element_line(colour = "black"), 
+                  axis.line.y = element_line(colour = "black"), 
+                  panel.grid            = element_blank(),
+                  panel.grid.major      = element_line(colour = "transparent"), 
+                  panel.grid.minor      = element_line(colour = "transparent"), 
+                  panel.background    = element_blank(),
+                  legend.key            = element_rect(fill="transparent", colour=NA),
+                  legend.key.size       = unit(1.2, "lines"), 
+                  legend.key.height     = NULL, 
+                  legend.key.width      = NULL,
+                  strip.placement       = "inside", 
+                  strip.placement.x     = NULL, 
+                  strip.placement.y     = NULL, 
+                  strip.switch.pad.grid = unit(0.1, "cm"), 
+                  strip.switch.pad.wrap = unit(0.1, "cm"),
+                  strip.background      = element_blank())                                         +
+              xlab(" ")                                                                            +
+              ylab("Incidence")                                                                    +
+              geom_vline(xintercept =as.Date("2006-01-01"), linetype = "dashed", alpha = 0.6)      +
+              annotate("text", x = as.Date("2008-04-01"), y = 6000, label = "Intervention", size=3)+
+              labs(title = "A) P. Vivax")                                                          +
               theme(plot.title = element_text(hjust = 0, face = "bold"))
 
+)
 
 ```
 
@@ -1690,54 +1691,55 @@ loreto_grid <- data.frame(
 )
 
 
-db_flpm_pfro                                                                   %>% 
-rbind(fitted_flpm_pfro)                                                        %>% 
-mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
-        .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
-        .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
-        .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
-       
-       )                                                                       %>% 
-ungroup()                                                                      %>% 
-filter(.model_desc %in% c("ACTUAL",model.selected))                            %>% 
-ggplot()                                                                        +
-geom_line(aes(x=.index,y=.value,color=.model_desc))                             +
-geom_ribbon(aes( x   =  .index,
-                 ymin = .conf_lo,
-                 ymax = .conf_hi,
-                fill=  .model_desc),alpha=0.5)                                  +
-scale_fill_manual("Model",values = c("#231E23","firebrick4"))                   +   
-scale_color_manual("Model",values = c("#231E23","firebrick4"))                  +
-geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")                   +
-theme(  
-      axis.line = element_line(color = "black"),
-      axis.line.x = element_line(colour = "black"), 
-      axis.line.y = element_line(colour = "black"), 
-      panel.grid            = element_blank(),
-      panel.grid.major      = element_line(colour = "transparent"), 
-      panel.grid.minor      = element_line(colour = "transparent"), 
-      panel.background    = element_blank(),
-      legend.key            = element_rect(fill="transparent", colour=NA), 
-      legend.key.size       = unit(1.2, "lines"), 
-      legend.key.height     = NULL, 
-      legend.key.width      = NULL,
-      strip.placement       = "inside", 
-      strip.placement.x     = NULL, 
-      strip.placement.y     = NULL, 
-      strip.switch.pad.grid = unit(0.1, "cm"), 
-      strip.switch.pad.wrap = unit(0.1, "cm"),
-      strip.background      = element_blank())                                        +
-  xlab(" ")                                                                           +
-  ylab("Incidence")                                                                   +
-  geom_vline(xintercept =as.Date("2006-01-01"), linetype = "dashed", alpha = 0.6)     +
-  annotate("text", x = as.Date("2008-04-01"), y = 3500, label = "Intervention",size=3)+
-              labs(title = "B) P. Falciparum")                                        +
-              theme(plot.title = element_text(hjust = 0, face = "bold"))
+(Falciparum.ts.plot<- db_flpm_pfro                                                                   %>% 
+                  rbind(fitted_flpm_pfro)                                                        %>% 
+                  mutate(.model_desc = str_replace(.model_desc, ".*PROPHET.*", "PROPHET"),
+                          .model_desc = str_replace(.model_desc, ".*NNAR.*", "NNAR"),
+                          .model_desc = str_replace(.model_desc, "2_A.*", "ARIMAXG"),
+                          .model_desc = str_replace(.model_desc, "3_R.*", "ARIMA")
+                         
+                         )                                                                       %>% 
+                  ungroup()                                                                      %>% 
+                  filter(.model_desc %in% c("ACTUAL",model.selected))                            %>% 
+                  ggplot()                                                                        +
+                  geom_line(aes(x=.index,y=.value,color=.model_desc))                             +
+                  geom_ribbon(aes( x   =  .index,
+                                   ymin = .conf_lo,
+                                   ymax = .conf_hi,
+                                  fill=  .model_desc),alpha=0.5)                                  +
+                  scale_fill_manual("Model",values = c("#231E23","firebrick4"))                   +   
+                  scale_color_manual("Model",values = c("#231E23","firebrick4"))                  +
+                  geofacet::facet_geo(~ id, grid = loreto_grid, label = "name")                   +
+                  theme(  
+                        axis.line = element_line(color = "black"),
+                        axis.line.x = element_line(colour = "black"), 
+                        axis.line.y = element_line(colour = "black"), 
+                        panel.grid            = element_blank(),
+                        panel.grid.major      = element_line(colour = "transparent"), 
+                        panel.grid.minor      = element_line(colour = "transparent"), 
+                        panel.background    = element_blank(),
+                        legend.key            = element_rect(fill="transparent", colour=NA), 
+                        legend.key.size       = unit(1.2, "lines"), 
+                        legend.key.height     = NULL, 
+                        legend.key.width      = NULL,
+                        strip.placement       = "inside", 
+                        strip.placement.x     = NULL, 
+                        strip.placement.y     = NULL, 
+                        strip.switch.pad.grid = unit(0.1, "cm"), 
+                        strip.switch.pad.wrap = unit(0.1, "cm"),
+                        strip.background      = element_blank())                                        +
+                    xlab(" ")                                                                           +
+                    ylab("Incidence")                                                                   +
+                    geom_vline(xintercept =as.Date("2006-01-01"), linetype = "dashed", alpha = 0.6)     +
+                    annotate("text", x = as.Date("2008-04-01"), y = 3500, label = "Intervention",size=3)+
+                    labs(title = "B) P. Falciparum")                                                    +
+                    theme(plot.title = element_text(hjust = 0, face = "bold"))
 
+
+)
 
 
 ```
-
 
 
 ### MALARIA CERO{.tabset}
@@ -1807,7 +1809,9 @@ theme(
   xlab(" ")                                                                         +
   ylab("Incidence")                                                                 +
   geom_vline(xintercept =as.Date("2017-01-01"), linetype = "dashed", alpha = 0.6)   +
-  annotate("text", x = as.Date("2018-07-01"), y = 4000, label = "Intervention", size=3)
+  annotate("text", x = as.Date("2018-07-01"), y = 4000, label = "Intervention", size=3)+
+              labs(title = "A) P. Vivax")                                                          +
+              theme(plot.title = element_text(hjust = 0, face = "bold"))
 
 
 ```
@@ -1873,11 +1877,13 @@ theme(
       strip.placement.y     = NULL, 
       strip.switch.pad.grid = unit(0.1, "cm"), 
       strip.switch.pad.wrap = unit(0.1, "cm"),
-      strip.background      = element_blank())                                    +
-  xlab(" ")                                                                       +
-  ylab("Incidence")                                                               +
-  geom_vline(xintercept =as.Date("2017-01-01"), linetype = "dashed", alpha = 0.6) +
-  annotate("text", x = as.Date("2018-07-01"), y = 4000, label = "Intervention",size=3)
+      strip.background      = element_blank())                                        +
+  xlab(" ")                                                                            +
+  ylab("Incidence")                                                                    +
+  geom_vline(xintercept =as.Date("2017-01-01"), linetype = "dashed", alpha = 0.6)      +
+  annotate("text", x = as.Date("2018-07-01"), y = 4000, label = "Intervention",size=3) +
+  labs(title = "B) P. Falciparum")                                                     +
+  theme(plot.title = element_text(hjust = 0, face = "bold"))
 
 
 
