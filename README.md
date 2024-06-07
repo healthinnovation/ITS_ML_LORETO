@@ -67,6 +67,12 @@ Repository structure
 </details>
 
 <details> 
+  <summary> Figures </summary>
+   Figures of our main results
+</details>
+
+
+<details> 
   <summary> Others </summary>
   
 - .gitignore
